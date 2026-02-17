@@ -17,8 +17,8 @@ def show_analysis():
 
     data = SessionManager.get_data()
 
-    # Analysis category selection
-    analysis_category = st.sidebar.selectbox(
+    # Analysis category selection (main area top)
+    analysis_category = st.selectbox(
         "分析カテゴリー",
         [
             "記述統計・集計",
@@ -31,6 +31,8 @@ def show_analysis():
             "専門分析",
         ]
     )
+
+    st.markdown("---")
 
     # Display appropriate analysis based on category
     if analysis_category == "記述統計・集計":

@@ -72,7 +72,8 @@ def show_hierarchical_clustering(df: pd.DataFrame):
             # Cluster statistics
             st.markdown("### クラスタ別統計")
             cluster_stats = result_df.groupby("クラスタ")[selected_cols].agg(["mean", "count"])
-            st.dataframe(cluster_stats, use_container_width=True)
+            cluster_stats.columns = [f"{col}_{agg}" for col, agg in cluster_stats.columns]
+            st.dataframe(cluster_stats.reset_index(), use_container_width=True)
 
             # Download
             csv = result_df.to_csv(index=False).encode("utf-8-sig")

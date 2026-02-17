@@ -11,12 +11,6 @@ from app.constants import MSG_LOGIN_SUCCESS, MSG_LOGIN_FAILED
 
 def show_login_page():
     """Display the login page."""
-    st.set_page_config(
-        page_title=f"{config.app.name} - Login",
-        page_icon="🔐",
-        layout="centered",
-    )
-
     # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
 
@@ -49,13 +43,6 @@ def show_main_app():
     if Authenticator.check_session_timeout():
         st.warning("セッションがタイムアウトしました。再度ログインしてください。")
         st.rerun()
-
-    st.set_page_config(
-        page_title=config.app.name,
-        page_icon="📊",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
 
     # Sidebar
     with st.sidebar:
@@ -110,21 +97,21 @@ def show_file_upload_page():
 
 def show_data_overview_page():
     """Display data overview page."""
-    from app.pages.data_overview import show_data_overview
+    from app.page_modules.data_overview import show_data_overview
 
     show_data_overview()
 
 
 def show_preprocessing_page():
     """Display preprocessing page."""
-    from app.pages.preprocessing import show_preprocessing
+    from app.page_modules.preprocessing import show_preprocessing
 
     show_preprocessing()
 
 
 def show_analysis_page():
     """Display analysis page."""
-    from app.pages.analysis import show_analysis
+    from app.page_modules.analysis import show_analysis
 
     show_analysis()
 
@@ -139,13 +126,21 @@ def show_export_page():
 
 def show_settings_page():
     """Display settings page."""
-    from app.pages.settings import show_settings
+    from app.page_modules.settings import show_settings
 
     show_settings()
 
 
 def main():
     """Main application function."""
+    # Set page config once at the top level
+    st.set_page_config(
+        page_title=config.app.name,
+        page_icon="📊",
+        layout="wide",
+        initial_sidebar_state="auto",
+    )
+
     # Initialize session state
     SessionManager.init_session_state()
 

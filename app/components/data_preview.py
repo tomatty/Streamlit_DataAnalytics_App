@@ -78,12 +78,12 @@ def show_column_info(df: pd.DataFrame):
     """
     st.subheader("列情報")
 
-    # Create column info DataFrame
+    # Create column info DataFrame (convert dtypes to str to avoid PyArrow error)
     col_info = pd.DataFrame({
         "列名": df.columns,
-        "データ型": df.dtypes.values,
+        "データ型": df.dtypes.astype(str).values,
         "欠損値数": df.isnull().sum().values,
-        "欠損率(%)": (df.isnull().sum() / len(df) * 100).values,
+        "欠損率(%)": (df.isnull().sum() / len(df) * 100).round(2).values,
         "ユニーク数": [df[col].nunique() for col in df.columns],
     })
 
