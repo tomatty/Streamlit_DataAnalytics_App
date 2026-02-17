@@ -1,5 +1,6 @@
 # Core Framework
 streamlit>=1.31.0
+extra-streamlit-components>=0.1.60
 
 # Data Processing
 pandas>=2.2.0

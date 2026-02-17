@@ -3,6 +3,7 @@ Main application entry point.
 Handles authentication and routing.
 """
 import streamlit as st
+
 from app.auth.authenticator import Authenticator
 from app.auth.session_manager import SessionManager
 from app.config import config
@@ -11,14 +12,12 @@ from app.constants import MSG_LOGIN_SUCCESS, MSG_LOGIN_FAILED
 
 def show_login_page():
     """Display the login page."""
-    # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
         st.title("🔐 ログイン")
         st.markdown("---")
 
-        # Login form
         with st.form("login_form"):
             username = st.text_input("ユーザー名", placeholder="ユーザー名を入力")
             password = st.text_input(
@@ -50,7 +49,6 @@ def show_main_app():
         st.markdown(f"**ユーザー:** {Authenticator.get_current_user()}")
         st.markdown("---")
 
-        # Main navigation menu
         menu_option = st.radio(
             "メニュー",
             [
@@ -66,12 +64,10 @@ def show_main_app():
 
         st.markdown("---")
 
-        # Logout button
         if st.button("🚪 ログアウト", use_container_width=True):
             Authenticator.logout()
             st.rerun()
 
-    # Main content area
     if menu_option == "📁 ファイルアップロード":
         show_file_upload_page()
     elif menu_option == "📊 データ概要":
@@ -133,7 +129,6 @@ def show_settings_page():
 
 def main():
     """Main application function."""
-    # Set page config once at the top level
     st.set_page_config(
         page_title=config.app.name,
         page_icon="📊",
@@ -141,10 +136,14 @@ def main():
         initial_sidebar_state="auto",
     )
 
-    # Initialize session state
+    # Restore session from URL query parameter (?s=TOKEN).
+    # st.query_params is populated from the HTTP request URL on every page load,
+    # so this works reliably across reloads without any JavaScript timing concerns.
+    Authenticator.restore_from_url()
+
+    # Initialize remaining session state defaults
     SessionManager.init_session_state()
 
-    # Check authentication
     if not Authenticator.is_authenticated():
         show_login_page()
     else:

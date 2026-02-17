@@ -3,13 +3,16 @@ Authentication module.
 Handles user login and credential validation.
 """
 from datetime import datetime
+
+import streamlit as st
+
+from app.auth.session_store import create_session, validate_session, delete_session, URL_PARAM
 from app.config import config
 from app.constants import (
     SESSION_AUTHENTICATED,
     SESSION_LOGIN_TIME,
     SESSION_USERNAME,
 )
-import streamlit as st
 
 
 class Authenticator:
@@ -27,14 +30,14 @@ class Authenticator:
         Returns:
             bool: True if credentials are valid, False otherwise
         """
-        return (
-            username == config.auth.username and password == config.auth.password
-        )
+        return username == config.auth.username and password == config.auth.password
 
     @staticmethod
     def login(username: str, password: str) -> bool:
         """
         Attempt to log in with provided credentials.
+        On success, creates a server-side session and stores its token in
+        the URL query parameter so it survives page reloads.
 
         Args:
             username: Username
@@ -47,15 +50,45 @@ class Authenticator:
             st.session_state[SESSION_AUTHENTICATED] = True
             st.session_state[SESSION_LOGIN_TIME] = datetime.now()
             st.session_state[SESSION_USERNAME] = username
+            token = create_session(username)
+            st.query_params[URL_PARAM] = token
             return True
         return False
 
     @staticmethod
-    def logout():
-        """Log out the current user and clear session state."""
-        # Clear all session state
+    def logout() -> None:
+        """Log out the current user, invalidate the session token, and clear state."""
+        token = st.query_params.get(URL_PARAM)
+        if token:
+            delete_session(token)
+        st.query_params.clear()
         for key in list(st.session_state.keys()):
             del st.session_state[key]
+
+    @staticmethod
+    def restore_from_url() -> bool:
+        """
+        Attempt to restore authentication from the URL query parameter.
+        Called at the start of every run so that page reloads do not
+        require the user to log in again.
+
+        Returns:
+            bool: True if session was restored, False otherwise
+        """
+        if st.session_state.get(SESSION_AUTHENTICATED):
+            return True
+        token = st.query_params.get(URL_PARAM)
+        if not token:
+            return False
+        valid, username = validate_session(token)
+        if valid:
+            st.session_state[SESSION_AUTHENTICATED] = True
+            st.session_state[SESSION_LOGIN_TIME] = datetime.now()
+            st.session_state[SESSION_USERNAME] = username
+            return True
+        # Token invalid/expired — remove it from the URL
+        st.query_params.clear()
+        return False
 
     @staticmethod
     def is_authenticated() -> bool:
