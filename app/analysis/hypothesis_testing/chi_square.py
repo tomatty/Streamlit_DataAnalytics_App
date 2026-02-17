@@ -1,0 +1,61 @@
+"""
+Chi-square test module.
+"""
+import pandas as pd
+import streamlit as st
+from scipy import stats
+import plotly.express as px
+
+
+def show_chi_square_test(df: pd.DataFrame):
+    """Display chi-square test interface."""
+    st.subheader("📊 カイ二乗検定")
+
+    categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    if len(categorical_cols) < 2:
+        st.warning("カイ二乗検定には少なくとも2つのカテゴリカル列が必要です。")
+        return
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        var1 = st.selectbox("変数1", categorical_cols)
+    with col2:
+        var2 = st.selectbox("変数2", [c for c in categorical_cols if c != var1])
+    with col3:
+        alpha = st.number_input("有意水準（α）", value=0.05, min_value=0.01, max_value=0.10, step=0.01)
+
+    if st.button("カイ二乗検定を実行", type="primary"):
+        # Create contingency table
+        contingency_table = pd.crosstab(df[var1], df[var2])
+
+        # Perform chi-square test
+        chi2, p_value, dof, expected = stats.chi2_contingency(contingency_table)
+
+        st.success("カイ二乗検定が完了しました！")
+
+        # Display results
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("χ² 統計量", f"{chi2:.4f}")
+        col2.metric("p値", f"{p_value:.4f}")
+        col3.metric("自由度", f"{dof}")
+        col4.metric("結果", "有意" if p_value < alpha else "有意でない")
+
+        st.markdown("### 分割表（観測度数）")
+        st.dataframe(contingency_table, use_container_width=True)
+
+        st.markdown("### 期待度数")
+        expected_df = pd.DataFrame(expected, index=contingency_table.index, columns=contingency_table.columns)
+        st.dataframe(expected_df, use_container_width=True)
+
+        # Heatmap
+        fig = px.imshow(contingency_table, labels=dict(color="度数"), text_auto=True)
+        fig.update_layout(title="分割表のヒートマップ")
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.info(f"帰無仮説: {var1} と {var2} は独立である")
+        if p_value < alpha:
+            st.success(f"p値 < {alpha} のため、帰無仮説を棄却します。2変数には関連があります。")
+        else:
+            st.warning(f"p値 >= {alpha} のため、帰無仮説を棄却できません。")
