@@ -22,9 +22,10 @@ def show_analysis(analysis_category: str | None = None):
             "分析カテゴリー",
             [
                 "記述統計・集計",
+                "仮説検定",
                 "相関分析",
                 "回帰分析",
-                "仮説検定",
+                "決定木分析",
                 "多変量解析",
                 "クラスタリング",
                 "テキスト分析",
@@ -37,12 +38,14 @@ def show_analysis(analysis_category: str | None = None):
     # Display appropriate analysis based on category
     if analysis_category == "記述統計・集計":
         show_descriptive_analysis(data)
+    elif analysis_category == "仮説検定":
+        show_hypothesis_testing_page(data)
     elif analysis_category == "相関分析":
         show_correlation_analysis_page(data)
     elif analysis_category == "回帰分析":
         show_regression_analysis_page(data)
-    elif analysis_category == "仮説検定":
-        show_hypothesis_testing_page(data)
+    elif analysis_category == "決定木分析":
+        show_tree_analysis_page(data)
     elif analysis_category == "多変量解析":
         show_multivariate_analysis_page(data)
     elif analysis_category == "クラスタリング":
@@ -140,6 +143,27 @@ def show_hypothesis_testing_page(data):
         show_independence_test(data)
     else:
         show_sample_size_calculation()
+
+
+def show_tree_analysis_page(data):
+    """Decision tree analysis."""
+    from app.analysis.tree.decision_tree import show_decision_tree
+    from app.analysis.tree.lightgbm_tree import show_lightgbm_tree
+
+    analysis_type = st.radio(
+        "分析タイプ",
+        ["decision_tree", "lightgbm"],
+        format_func=lambda x: {
+            "decision_tree": "決定木（sklearn）",
+            "lightgbm": "LightGBM",
+        }[x],
+        horizontal=True,
+    )
+
+    if analysis_type == "decision_tree":
+        show_decision_tree(data)
+    else:
+        show_lightgbm_tree(data)
 
 
 def show_multivariate_analysis_page(data):

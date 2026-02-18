@@ -26,6 +26,7 @@ python-dotenv>=1.0.0
 # Specialized Analysis
 factor-analyzer>=0.5.0
 prince>=0.13.0
+lightgbm>=4.3.0
 
 # Text Analysis
 gensim>=4.3.0
