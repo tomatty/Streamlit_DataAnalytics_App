@@ -60,6 +60,28 @@ def show_pca_analysis(df: pd.DataFrame):
             })
             st.dataframe(explained_var, use_container_width=True)
 
+            with st.expander("📖 PCA指標の解釈"):
+                cumulative = np.cumsum(pca.explained_variance_ratio_) * 100
+                st.markdown(
+                    f"""
+**寄与率（Explained Variance Ratio）**: 各主成分が元データの全変動をどの割合だけ説明するかを示します。
+
+**累積寄与率**: 第1〜第k主成分までの寄与率の合計。主成分数の選択基準として使用します。
+
+| 累積寄与率の目安 | 判断 |
+|----------------|------|
+| 80% 以上 | 十分な情報を保持 |
+| 70〜80% | 概ね許容範囲 |
+| 70% 未満 | 情報の損失が大きい可能性 |
+
+現在の累積寄与率: {', '.join([f'PC1〜{i+1}={v:.1f}%' for i, v in enumerate(cumulative)])}
+
+**因子負荷量（Loadings）**: 各主成分と元変数の相関係数。絶対値が大きいほど（目安: 0.4以上）その変数が主成分の解釈に重要です。
+
+**固有値基準（Kaiser基準）**: 固有値 > 1 の主成分のみ採用するという選択法もあります。スクリープロットの「折れ曲がり点（elbow）」も参考にしてください。
+                    """
+                )
+
             # Scree plot
             fig_scree = go.Figure()
             fig_scree.add_trace(go.Bar(

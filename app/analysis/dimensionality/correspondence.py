@@ -51,6 +51,33 @@ def show_correspondence_analysis(df: pd.DataFrame):
             })
             st.dataframe(inertia_df, use_container_width=True)
 
+            with st.expander("📖 コレスポンデンス分析指標の解釈"):
+                total_inertia_pct = ca.explained_inertia_[:2].sum() * 100
+                st.markdown(
+                    f"""
+**慣性（Inertia）**: 分割表内の変数間の対応関係（独立性からの逸脱）の強さを表す指標です。χ²統計量をデータ全体のサンプル数で割った値に相当します。
+
+$$\\text{{全慣性}} = \\frac{{\\chi^2}}{{n}}$$
+
+**固有値（Eigenvalue）**: 各次元が説明する慣性の量。値が大きいほど次元の重要度が高いです。
+
+**寄与率**: 各次元が全慣性のどの割合を説明するかを示します。
+
+| 2次元の累積寄与率 | 判断 |
+|-----------------|------|
+| 80% 以上 | 2次元マップで十分な情報を表現できている |
+| 60〜80% | おおむね有効だが情報損失あり |
+| 60% 未満 | 重要な情報が2次元に収まっていない可能性 |
+
+現在の2次元累積寄与率: **{total_inertia_pct:.1f}%**
+
+**対応分析マップの読み方**:
+- 同じ象限に近い点は互いに関連が強い
+- 原点（0, 0）に近い点は特定の次元との関連が弱い
+- 行ポイント（青）と列ポイント（赤）が近い場合、その組み合わせは強く関連している
+                    """
+                )
+
             # Plot
             st.markdown("### 対応分析マップ")
             row_coords = ca.row_coordinates(contingency_table)

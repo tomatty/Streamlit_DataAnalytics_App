@@ -64,7 +64,8 @@ def show_conjoint_analysis(df: pd.DataFrame):
 
             # Model fit
             r2 = model.score(X, y)
-            st.metric("決定係数 (R²)", f"{r2:.4f}")
+            with st.container(border=True):
+                st.metric("決定係数 (R²)", f"{r2:.4f}")
 
         except Exception as e:
             st.error(f"エラーが発生しました: {str(e)}")

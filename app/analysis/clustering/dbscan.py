@@ -59,8 +59,12 @@ def show_dbscan_clustering(df: pd.DataFrame):
             st.success("DBSCANクラスタリングが完了しました！")
 
             col1, col2 = st.columns(2)
-            col1.metric("クラスタ数", n_clusters)
-            col2.metric("ノイズ点数", n_noise)
+            with col1:
+                with st.container(border=True):
+                    st.metric("クラスタ数", n_clusters)
+            with col2:
+                with st.container(border=True):
+                    st.metric("ノイズ点数", n_noise)
 
             # Cluster statistics
             st.markdown("### クラスタ別統計")

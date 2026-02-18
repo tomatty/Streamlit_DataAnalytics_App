@@ -30,21 +30,21 @@ def show_data_overview():
 
     # Tabs for different views
     tab1, tab2, tab3, tab4 = st.tabs(
-        ["基本情報", "統計量", "データプレビュー", "欠損値分析"]
+        ["データプレビュー", "基本情報", "統計量", "欠損値分析"]
     )
 
     with tab1:
+        show_data_preview(data)
+
+    with tab2:
         show_basic_info(data)
         st.markdown("---")
         show_column_info(data)
 
-    with tab2:
+    with tab3:
         show_basic_statistics(data)
         st.markdown("---")
         show_categorical_statistics(data)
-
-    with tab3:
-        show_data_preview(data)
 
     with tab4:
         show_missing_values(data)

@@ -41,9 +41,15 @@ def show_anova(df: pd.DataFrame):
         st.success("ANOVAが完了しました！")
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("F統計量", f"{f_stat:.4f}")
-        col2.metric("p値", f"{p_value:.4f}")
-        col3.metric("結果", "有意" if p_value < alpha else "有意でない")
+        with col1:
+            with st.container(border=True):
+                st.metric("F統計量", f"{f_stat:.4f}")
+        with col2:
+            with st.container(border=True):
+                st.metric("p値", f"{p_value:.4f}")
+        with col3:
+            with st.container(border=True):
+                st.metric("結果", "有意" if p_value < alpha else "有意でない")
 
         # Group statistics
         st.markdown("### グループ別統計量")
@@ -60,3 +66,23 @@ def show_anova(df: pd.DataFrame):
             st.success(f"p値 < {alpha} のため、帰無仮説を棄却します。グループ間に差があります。")
         else:
             st.warning(f"p値 >= {alpha} のため、帰無仮説を棄却できません。")
+
+        with st.expander("📖 ANOVA指標の解釈"):
+            st.markdown(
+                f"""
+**F統計量**: グループ間の分散（処理効果）をグループ内の分散（誤差）で割った値。値が大きいほどグループ間の差が大きいことを意味します。
+
+$$F = \\frac{{\\text{{グループ間分散（MS}}_{{\\text{{between}}}}\\text{{）}}}}{{\\text{{グループ内分散（MS}}_{{\\text{{within}}}}\\text{{）}}}}$$
+
+| F統計量 | 目安 |
+|---------|------|
+| F ≈ 1 | グループ間に差なし（帰無仮説に近い） |
+| F が大きい | グループ間に差あり（有意性はp値で判断） |
+
+**p値**: 帰無仮説（すべてのグループの母平均が等しい）のもとで現在のF値以上が観察される確率。
+
+⚠️ **注意**: ANOVAはいずれかのグループに差があることを示しますが、どのグループ間に差があるかは **多重比較検定**（Tukey法など）で追加確認が必要です。
+
+現在の値: F={f_stat:.4f}, p={p_value:.4f}（有意水準: {alpha}）
+                """
+            )

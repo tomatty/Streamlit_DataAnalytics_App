@@ -44,8 +44,12 @@ def show_factor_analysis(df: pd.DataFrame):
             chi_square_value, p_value = calculate_bartlett_sphericity(data_subset)
             st.markdown("### Bartlett球面性検定")
             col1, col2 = st.columns(2)
-            col1.metric("χ² 統計量", f"{chi_square_value:.2f}")
-            col2.metric("p値", f"{p_value:.4f}")
+            with col1:
+                with st.container(border=True):
+                    st.metric("χ² 統計量", f"{chi_square_value:.2f}")
+            with col2:
+                with st.container(border=True):
+                    st.metric("p値", f"{p_value:.4f}")
             if p_value < 0.05:
                 st.success("p < 0.05: データは因子分析に適しています。")
             else:
@@ -54,7 +58,8 @@ def show_factor_analysis(df: pd.DataFrame):
             # KMO test
             kmo_all, kmo_model = calculate_kmo(data_subset)
             st.markdown("### KMO標本妥当性の測度")
-            st.metric("KMO", f"{kmo_model:.3f}")
+            with st.container(border=True):
+                st.metric("KMO", f"{kmo_model:.3f}")
             if kmo_model >= 0.8:
                 st.success("KMO >= 0.8: 非常に良い")
             elif kmo_model >= 0.7:

@@ -54,15 +54,43 @@ def show_one_sample_t_test(df: pd.DataFrame, numeric_cols: list):
 
         st.success("t検定が完了しました！")
         col1, col2, col3 = st.columns(3)
-        col1.metric("t統計量", f"{t_stat:.4f}")
-        col2.metric("p値", f"{p_value:.4f}")
-        col3.metric("結果", "有意" if p_value < alpha else "有意でない")
+        with col1:
+            with st.container(border=True):
+                st.metric("t統計量", f"{t_stat:.4f}")
+        with col2:
+            with st.container(border=True):
+                st.metric("p値", f"{p_value:.4f}")
+        with col3:
+            with st.container(border=True):
+                st.metric("結果", "有意" if p_value < alpha else "有意でない")
 
         st.info(f"帰無仮説: 母平均 = {mu0}")
         if p_value < alpha:
             st.success(f"p値 < {alpha} のため、帰無仮説を棄却します。")
         else:
             st.warning(f"p値 >= {alpha} のため、帰無仮説を棄却できません。")
+
+        with st.expander("📖 t検定指標の解釈"):
+            st.markdown(
+                f"""
+**t統計量**: 標本平均と帰無仮説の母平均の差を標準誤差で割った値です。絶対値が大きいほど差が統計的に有意であることを示します。
+
+$$t = \\frac{{\\bar{{x}} - \\mu_0}}{{s / \\sqrt{{n}}}}$$
+
+（$\\bar{{x}}$: 標本平均, $\\mu_0$: 帰無仮説の母平均, $s$: 標本標準偏差, $n$: サンプル数）
+
+**p値（有意確率）**: 帰無仮説が真であると仮定したときに、観察された差以上に極端な結果が得られる確率です。
+
+| p値 | 解釈 |
+|-----|------|
+| p < 0.001 | 非常に強い証拠で帰無仮説を棄却 |
+| p < 0.01 | 強い証拠で棄却 |
+| p < 0.05 | 棄却（一般的な有意水準） |
+| p ≥ 0.05 | 帰無仮説を棄却できない |
+
+現在の値: t={t_stat:.4f}, p={p_value:.4f}（有意水準: {alpha}）
+                """
+            )
 
 
 def show_two_sample_t_test(df: pd.DataFrame, numeric_cols: list):
@@ -90,12 +118,36 @@ def show_two_sample_t_test(df: pd.DataFrame, numeric_cols: list):
 
         st.success("t検定が完了しました！")
         col1, col2, col3 = st.columns(3)
-        col1.metric("t統計量", f"{t_stat:.4f}")
-        col2.metric("p値", f"{p_value:.4f}")
-        col3.metric("結果", "有意" if p_value < alpha else "有意でない")
+        with col1:
+            with st.container(border=True):
+                st.metric("t統計量", f"{t_stat:.4f}")
+        with col2:
+            with st.container(border=True):
+                st.metric("p値", f"{p_value:.4f}")
+        with col3:
+            with st.container(border=True):
+                st.metric("結果", "有意" if p_value < alpha else "有意でない")
 
         st.markdown(f"**{groups[0]}の平均:** {group1.mean():.4f}")
         st.markdown(f"**{groups[1]}の平均:** {group2.mean():.4f}")
+
+        with st.expander("📖 t検定指標の解釈"):
+            st.markdown(
+                f"""
+**t統計量**: 2グループの平均差を標準誤差で割った値。絶対値が大きいほど差が有意です。
+
+$$t = \\frac{{\\bar{{x}}_1 - \\bar{{x}}_2}}{{\\sqrt{{\\frac{{s_1^2}}{{n_1}} + \\frac{{s_2^2}}{{n_2}}}}}}$$
+
+**p値**: 帰無仮説（2グループの母平均が等しい）のもとで現在の差以上が観察される確率。
+
+| p値 | 解釈 |
+|-----|------|
+| p < 0.05 | 2グループ間に統計的に有意な差あり |
+| p ≥ 0.05 | 有意な差を確認できない |
+
+現在の値: t={t_stat:.4f}, p={p_value:.4f}（有意水準: {alpha}）
+                """
+            )
 
 
 def show_paired_t_test(df: pd.DataFrame, numeric_cols: list):
@@ -114,6 +166,27 @@ def show_paired_t_test(df: pd.DataFrame, numeric_cols: list):
 
         st.success("対応のあるt検定が完了しました！")
         col1, col2, col3 = st.columns(3)
-        col1.metric("t統計量", f"{t_stat:.4f}")
-        col2.metric("p値", f"{p_value:.4f}")
-        col3.metric("結果", "有意" if p_value < alpha else "有意でない")
+        with col1:
+            with st.container(border=True):
+                st.metric("t統計量", f"{t_stat:.4f}")
+        with col2:
+            with st.container(border=True):
+                st.metric("p値", f"{p_value:.4f}")
+        with col3:
+            with st.container(border=True):
+                st.metric("結果", "有意" if p_value < alpha else "有意でない")
+
+        with st.expander("📖 対応のあるt検定指標の解釈"):
+            st.markdown(
+                f"""
+**対応のあるt検定**: 同一対象の2時点や2条件を比較します。各ペアの差 $d_i = x_{{1i}} - x_{{2i}}$ を用います。
+
+$$t = \\frac{{\\bar{{d}}}}{{s_d / \\sqrt{{n}}}}$$
+
+（$\\bar{{d}}$: 差の平均, $s_d$: 差の標準偏差, $n$: ペア数）
+
+**p値の解釈**: p < {alpha} で「2条件間に統計的に有意な差がある」と結論付けられます。
+
+現在の値: t={t_stat:.4f}, p={p_value:.4f}（有意水準: {alpha}）
+                """
+            )

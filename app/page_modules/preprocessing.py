@@ -5,6 +5,7 @@ Provides UI for data cleaning and transformation.
 import streamlit as st
 from app.auth.session_manager import SessionManager
 from app.data.preprocessor import DataPreprocessor
+from app.components.data_preview import show_data_preview
 
 
 def show_preprocessing():
@@ -42,6 +43,10 @@ def show_preprocessing():
     # Show preprocessing history
     st.markdown("---")
     show_preprocessing_history()
+
+    # Show data preview after preprocessing history
+    st.markdown("---")
+    show_data_preview(data, title="現在のデータプレビュー", page_size=20)
 
 
 def show_missing_value_handling(data):
@@ -186,7 +191,11 @@ def show_encoding(data):
     col1, col2 = st.columns(2)
 
     with col1:
-        selected_col = st.selectbox("対象列を選択", categorical_cols)
+        selected_cols = st.multiselect(
+            "対象列を選択（複数選択可）",
+            categorical_cols,
+            default=categorical_cols[:1],
+        )
 
     with col2:
         method = st.selectbox(
@@ -198,18 +207,22 @@ def show_encoding(data):
             }[x],
         )
 
+    if not selected_cols:
+        st.info("対象列を選択してください。")
+        return
+
     if st.button("エンコーディングを実行", type="primary"):
         try:
             processed_data = DataPreprocessor.encode_categorical(
-                data, selected_col, method
+                data, selected_cols, method
             )
             SessionManager.set_data(processed_data, is_raw=False)
             SessionManager.add_preprocessing_step({
                 "operation": "encode_categorical",
-                "column": selected_col,
+                "columns": selected_cols,
                 "method": method,
             })
-            st.success("エンコーディングが完了しました！")
+            st.success(f"エンコーディングが完了しました！（対象列: {', '.join(selected_cols)}）")
             st.rerun()
         except Exception as e:
             st.error(f"エラーが発生しました: {str(e)}")

@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 import scipy.stats as stats
+import statsmodels.api as sm
 
 
 def show_simple_regression(df: pd.DataFrame):
@@ -68,18 +69,110 @@ def show_simple_regression(df: pd.DataFrame):
             # Display results
             st.success("回帰分析が完了しました！")
 
+            # Statsmodels OLS for detailed statistical inference
+            X_sm = sm.add_constant(X[x_col].values)
+            ols_model = sm.OLS(y.values, X_sm).fit()
+
             # Regression equation
             st.markdown("### 回帰式")
             st.latex(
                 f"\\hat{{y}} = {model.intercept_:.4f} + {model.coef_[0]:.4f} \\cdot x"
             )
 
+            # Statsmodels detailed results
+            st.markdown("### statsmodels 詳細結果")
+            coef_table = pd.DataFrame({
+                "変数": ["切片", x_col],
+                "係数": ols_model.params,
+                "標準誤差": ols_model.bse,
+                "t値": ols_model.tvalues,
+                "p値": ols_model.pvalues,
+                "95%CI下限": ols_model.conf_int()[0],
+                "95%CI上限": ols_model.conf_int()[1],
+            })
+            coef_table["有意"] = coef_table["p値"].apply(
+                lambda p: "***" if p < 0.001 else ("**" if p < 0.01 else ("*" if p < 0.05 else ""))
+            )
+            st.dataframe(coef_table.set_index("変数").style.format({
+                "係数": "{:.4f}", "標準誤差": "{:.4f}", "t値": "{:.4f}",
+                "p値": "{:.4f}", "95%CI下限": "{:.4f}", "95%CI上限": "{:.4f}",
+            }), use_container_width=True)
+
+            sm_cols = st.columns(4)
+            with sm_cols[0]:
+                with st.container(border=True):
+                    st.metric("F統計量", f"{ols_model.fvalue:.4f}")
+            with sm_cols[1]:
+                with st.container(border=True):
+                    st.metric("F検定 p値", f"{ols_model.f_pvalue:.4f}")
+            with sm_cols[2]:
+                with st.container(border=True):
+                    st.metric("AIC", f"{ols_model.aic:.2f}")
+            with sm_cols[3]:
+                with st.container(border=True):
+                    st.metric("BIC", f"{ols_model.bic:.2f}")
+
+            with st.expander("📖 statsmodels結果の解釈"):
+                st.markdown(
+                    """
+**標準誤差（SE）**: 係数推定値のばらつきの大きさ。小さいほど推定が安定している。
+
+**t値**: 係数がゼロと有意に異なるかを検定する統計量。$t = \\hat{\\beta} / SE(\\hat{\\beta})$
+
+**p値の有意水準記号**:
+| 記号 | 意味 |
+|------|------|
+| `***` | p < 0.001（非常に強い証拠） |
+| `**` | p < 0.01（強い証拠） |
+| `*` | p < 0.05（有意） |
+| （なし）| p ≥ 0.05（有意でない） |
+
+**95%信頼区間（CI）**: 係数の真の値が95%の確率で含まれる範囲。区間が0を含む場合は有意でない。
+
+**F統計量**: モデル全体の有意性を検定。p値が小さいほど回帰モデルが有意。
+
+**AIC / BIC**: モデルの情報量基準。値が小さいほど良いモデル（複数モデルの比較に使用）。
+                    """
+                )
+
             # Model performance metrics
             st.markdown("### モデル評価指標")
             col1, col2, col3 = st.columns(3)
-            col1.metric("決定係数 (R²)", f"{r2:.4f}")
-            col2.metric("RMSE", f"{rmse:.4f}")
-            col3.metric("MAE", f"{mae:.4f}")
+            with col1:
+                with st.container(border=True):
+                    st.metric("決定係数 (R²)", f"{r2:.4f}")
+            with col2:
+                with st.container(border=True):
+                    st.metric("RMSE", f"{rmse:.4f}")
+            with col3:
+                with st.container(border=True):
+                    st.metric("MAE", f"{mae:.4f}")
+
+            with st.expander("📖 モデル評価指標の解釈"):
+                st.markdown(
+                    f"""
+**決定係数（R²）**: モデルが目的変数の変動をどの程度説明できるかを示します（範囲: 0〜1）。
+
+| R² | 評価 |
+|----|------|
+| 0.9 以上 | 非常に良い当てはまり |
+| 0.7 〜 0.9 | 良い当てはまり |
+| 0.5 〜 0.7 | 中程度の当てはまり |
+| 0.5 未満 | 当てはまりが弱い |
+
+$$R^2 = 1 - \\frac{{\\sum(y_i - \\hat{{y}}_i)^2}}{{\\sum(y_i - \\bar{{y}})^2}}$$
+
+**RMSE（二乗平均平方根誤差）**: 予測誤差の標準偏差。目的変数と同じ単位で解釈でき、外れ値の影響を受けやすい。
+
+$$RMSE = \\sqrt{{\\frac{{1}}{{n}}\\sum_{{i=1}}^{{n}}(y_i - \\hat{{y}}_i)^2}}$$
+
+**MAE（平均絶対誤差）**: 予測誤差の絶対値の平均。外れ値の影響を受けにくく、直感的に解釈しやすい。
+
+$$MAE = \\frac{{1}}{{n}}\\sum_{{i=1}}^{{n}}|y_i - \\hat{{y}}_i|$$
+
+現在の値: R²={r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}
+                    """
+                )
 
             # Scatter plot with regression line
             st.markdown("### 回帰直線")
@@ -135,29 +228,49 @@ def show_simple_regression(df: pd.DataFrame):
             )
             st.plotly_chart(fig_res, use_container_width=True)
 
-            # Q-Q plot for residuals
-            st.markdown("### Q-Qプロット（正規性の確認）")
-            fig_qq = go.Figure()
+            # Q-Q plot and histogram for residuals
+            st.markdown("### 残差の正規性確認")
+            col_qq, col_hist = st.columns(2)
 
-            (osm, osr), (slope, intercept, r) = stats.probplot(residuals, dist="norm")
-            fig_qq.add_trace(
-                go.Scatter(x=osm, y=osr, mode="markers", name="残差")
-            )
-            fig_qq.add_trace(
-                go.Scatter(
-                    x=osm,
-                    y=slope * osm + intercept,
-                    mode="lines",
-                    name="理論分布",
-                    line=dict(color="red"),
+            with col_qq:
+                fig_qq = go.Figure()
+                (osm, osr), (slope, intercept, r) = stats.probplot(residuals, dist="norm")
+                fig_qq.add_trace(
+                    go.Scatter(x=osm, y=osr, mode="markers", name="残差")
                 )
-            )
-            fig_qq.update_layout(
-                title="Q-Qプロット",
-                xaxis_title="理論分位数",
-                yaxis_title="サンプル分位数",
-            )
-            st.plotly_chart(fig_qq, use_container_width=True)
+                fig_qq.add_trace(
+                    go.Scatter(
+                        x=osm,
+                        y=slope * osm + intercept,
+                        mode="lines",
+                        name="理論分布",
+                        line=dict(color="red"),
+                    )
+                )
+                fig_qq.update_layout(
+                    title="Q-Qプロット",
+                    xaxis_title="理論分位数",
+                    yaxis_title="サンプル分位数",
+                )
+                st.plotly_chart(fig_qq, use_container_width=True)
+
+            with col_hist:
+                fig_hist = go.Figure()
+                fig_hist.add_trace(
+                    go.Histogram(
+                        x=residuals,
+                        nbinsx=30,
+                        name="残差",
+                        marker_color="steelblue",
+                        opacity=0.7,
+                    )
+                )
+                fig_hist.update_layout(
+                    title="残差のヒストグラム",
+                    xaxis_title="残差",
+                    yaxis_title="頻度",
+                )
+                st.plotly_chart(fig_hist, use_container_width=True)
 
         except Exception as e:
             st.error(f"エラーが発生しました: {str(e)}")

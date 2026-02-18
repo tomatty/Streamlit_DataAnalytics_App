@@ -112,10 +112,18 @@ def show_nps_analysis(df: pd.DataFrame, numeric_cols: list):
 
             st.markdown("### NPS計算結果")
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("NPS", f"{nps:.1f}")
-            col2.metric("推奨者", f"{promoters} ({promoters/total*100:.1f}%)")
-            col3.metric("中立者", f"{passives} ({passives/total*100:.1f}%)")
-            col4.metric("批判者", f"{detractors} ({detractors/total*100:.1f}%)")
+            with col1:
+                with st.container(border=True):
+                    st.metric("NPS", f"{nps:.1f}")
+            with col2:
+                with st.container(border=True):
+                    st.metric("推奨者", f"{promoters} ({promoters/total*100:.1f}%)")
+            with col3:
+                with st.container(border=True):
+                    st.metric("中立者", f"{passives} ({passives/total*100:.1f}%)")
+            with col4:
+                with st.container(border=True):
+                    st.metric("批判者", f"{detractors} ({detractors/total*100:.1f}%)")
 
             # NPS interpretation
             if nps > 50:

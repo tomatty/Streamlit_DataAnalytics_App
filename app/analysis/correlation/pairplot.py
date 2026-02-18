@@ -3,14 +3,14 @@ Pair plot analysis module.
 """
 import pandas as pd
 import streamlit as st
+import seaborn as sns
+import matplotlib.pyplot as plt
 import plotly.express as px
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 
 
 def show_pairplot_analysis(df: pd.DataFrame):
     """
-    Display pair plot analysis.
+    Display pair plot analysis using seaborn pairplot.
 
     Args:
         df: DataFrame to analyze
@@ -49,24 +49,30 @@ def show_pairplot_analysis(df: pd.DataFrame):
     if st.button("ペアプロットを生成", type="primary"):
         try:
             with st.spinner("ペアプロットを生成中..."):
+                plot_df = df[selected_cols + ([hue_col] if hue_col != "なし" else [])].dropna()
+
+                fig, ax = plt.subplots()
+                plt.close(fig)
+
                 if hue_col != "なし":
-                    # Scatter matrix with color coding
-                    fig = px.scatter_matrix(
-                        df,
-                        dimensions=selected_cols,
-                        color=hue_col,
-                        title="ペアプロット",
+                    pair_grid = sns.pairplot(
+                        plot_df,
+                        vars=selected_cols,
+                        hue=hue_col,
+                        diag_kind="kde",
+                        plot_kws={"alpha": 0.6},
                     )
                 else:
-                    # Simple scatter matrix
-                    fig = px.scatter_matrix(
-                        df,
-                        dimensions=selected_cols,
-                        title="ペアプロット",
+                    pair_grid = sns.pairplot(
+                        plot_df,
+                        vars=selected_cols,
+                        diag_kind="kde",
+                        plot_kws={"alpha": 0.6},
                     )
 
-                fig.update_traces(diagonal_visible=False, showupperhalf=False)
-                st.plotly_chart(fig, use_container_width=True)
+                pair_grid.figure.suptitle("ペアプロット", y=1.02)
+                st.pyplot(pair_grid.figure)
+                plt.close(pair_grid.figure)
 
                 st.success("ペアプロットを生成しました！")
 
@@ -132,7 +138,8 @@ def show_scatter_plot(df: pd.DataFrame):
 
             # Show correlation
             corr = df[[x_col, y_col]].corr().iloc[0, 1]
-            st.metric("相関係数", f"{corr:.3f}")
+            with st.container(border=True):
+                st.metric("相関係数", f"{corr:.3f}")
 
             st.success("散布図を生成しました！")
 

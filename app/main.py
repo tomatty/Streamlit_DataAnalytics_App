@@ -52,15 +52,32 @@ def show_main_app():
         menu_option = st.radio(
             "メニュー",
             [
+                "⚙️ パラメータ設定",
                 "📁 ファイルアップロード",
                 "📊 データ概要",
                 "🔧 データ前処理",
                 "📈 分析",
                 "💾 エクスポート",
-                "⚙️ 分析設定",
             ],
             index=0,
         )
+
+        analysis_category = None
+        if menu_option == "📈 分析":
+            analysis_category = st.selectbox(
+                "分析カテゴリー",
+                [
+                    "記述統計・集計",
+                    "相関分析",
+                    "回帰分析",
+                    "仮説検定",
+                    "多変量解析",
+                    "クラスタリング",
+                    "テキスト分析",
+                    "専門分析",
+                ],
+                key="sidebar_analysis_category",
+            )
 
         st.markdown("---")
 
@@ -68,18 +85,18 @@ def show_main_app():
             Authenticator.logout()
             st.rerun()
 
-    if menu_option == "📁 ファイルアップロード":
+    if menu_option == "⚙️ パラメータ設定":
+        show_settings_page()
+    elif menu_option == "📁 ファイルアップロード":
         show_file_upload_page()
     elif menu_option == "📊 データ概要":
         show_data_overview_page()
     elif menu_option == "🔧 データ前処理":
         show_preprocessing_page()
     elif menu_option == "📈 分析":
-        show_analysis_page()
+        show_analysis_page(analysis_category)
     elif menu_option == "💾 エクスポート":
         show_export_page()
-    elif menu_option == "⚙️ 分析設定":
-        show_settings_page()
 
 
 def show_file_upload_page():
@@ -105,11 +122,11 @@ def show_preprocessing_page():
     show_preprocessing()
 
 
-def show_analysis_page():
+def show_analysis_page(analysis_category: str | None = None):
     """Display analysis page."""
     from app.page_modules.analysis import show_analysis
 
-    show_analysis()
+    show_analysis(analysis_category)
 
 
 def show_export_page():

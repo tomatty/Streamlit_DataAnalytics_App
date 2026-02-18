@@ -92,25 +92,26 @@ class DataPreprocessor:
         return df_copy
 
     @staticmethod
-    def encode_categorical(df: pd.DataFrame, column: str, method: str = "label") -> pd.DataFrame:
+    def encode_categorical(df: pd.DataFrame, columns: list, method: str = "label") -> pd.DataFrame:
         """
         Encode categorical variables.
 
         Args:
             df: DataFrame to process
-            column: Column name
+            columns: List of column names to encode
             method: Encoding method ('label' or 'onehot')
 
         Returns:
-            pd.DataFrame: DataFrame with encoded column
+            pd.DataFrame: DataFrame with encoded columns
         """
         df_copy = df.copy()
 
         if method == "label":
             le = LabelEncoder()
-            df_copy[column] = le.fit_transform(df_copy[column])
+            for column in columns:
+                df_copy[column] = le.fit_transform(df_copy[column])
         elif method == "onehot":
-            df_copy = pd.get_dummies(df_copy, columns=[column], prefix=column)
+            df_copy = pd.get_dummies(df_copy, columns=columns, prefix=columns)
 
         return df_copy
 

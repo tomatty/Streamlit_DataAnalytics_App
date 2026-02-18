@@ -5,7 +5,7 @@ import streamlit as st
 from app.auth.session_manager import SessionManager
 
 
-def show_analysis():
+def show_analysis(analysis_category: str | None = None):
     """Display analysis page with all analysis options."""
     st.header("📈 分析")
 
@@ -17,20 +17,20 @@ def show_analysis():
 
     data = SessionManager.get_data()
 
-    # Analysis category selection (main area top)
-    analysis_category = st.selectbox(
-        "分析カテゴリー",
-        [
-            "記述統計・集計",
-            "相関分析",
-            "回帰分析",
-            "仮説検定",
-            "多変量解析",
-            "クラスタリング",
-            "テキスト分析",
-            "専門分析",
-        ]
-    )
+    if analysis_category is None:
+        analysis_category = st.selectbox(
+            "分析カテゴリー",
+            [
+                "記述統計・集計",
+                "相関分析",
+                "回帰分析",
+                "仮説検定",
+                "多変量解析",
+                "クラスタリング",
+                "テキスト分析",
+                "専門分析",
+            ]
+        )
 
     st.markdown("---")
 
@@ -114,15 +114,17 @@ def show_hypothesis_testing_page(data):
     from app.analysis.hypothesis_testing.t_test import show_t_test
     from app.analysis.hypothesis_testing.chi_square import show_chi_square_test
     from app.analysis.hypothesis_testing.anova import show_anova
+    from app.analysis.hypothesis_testing.independence_test import show_independence_test
     from app.analysis.hypothesis_testing.sample_size import show_sample_size_calculation
 
     analysis_type = st.radio(
         "分析タイプ",
-        ["t_test", "chi_square", "anova", "sample_size"],
+        ["t_test", "chi_square", "anova", "independence", "sample_size"],
         format_func=lambda x: {
             "t_test": "t検定",
             "chi_square": "カイ二乗検定",
             "anova": "ANOVA",
+            "independence": "独立性の検定",
             "sample_size": "サンプルサイズ計算"
         }[x],
         horizontal=True
@@ -134,6 +136,8 @@ def show_hypothesis_testing_page(data):
         show_chi_square_test(data)
     elif analysis_type == "anova":
         show_anova(data)
+    elif analysis_type == "independence":
+        show_independence_test(data)
     else:
         show_sample_size_calculation()
 

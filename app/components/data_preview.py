@@ -55,18 +55,22 @@ def show_basic_info(df: pd.DataFrame):
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("行数", f"{len(df):,}")
+        with st.container(border=True):
+            st.metric("行数", f"{len(df):,}")
 
     with col2:
-        st.metric("列数", f"{len(df.columns):,}")
+        with st.container(border=True):
+            st.metric("列数", f"{len(df.columns):,}")
 
     with col3:
         memory_mb = df.memory_usage(deep=True).sum() / 1024**2
-        st.metric("メモリ使用量", f"{memory_mb:.2f} MB")
+        with st.container(border=True):
+            st.metric("メモリ使用量", f"{memory_mb:.2f} MB")
 
     with col4:
         missing_total = df.isnull().sum().sum()
-        st.metric("欠損値", f"{missing_total:,}")
+        with st.container(border=True):
+            st.metric("欠損値", f"{missing_total:,}")
 
 
 def show_column_info(df: pd.DataFrame):

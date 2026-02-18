@@ -9,6 +9,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import cross_val_score
 import scipy.stats as stats
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
 def show_multiple_regression(df: pd.DataFrame):
@@ -81,15 +83,104 @@ def show_multiple_regression(df: pd.DataFrame):
             for i, col in enumerate(x_cols):
                 st.text(f"  x_{i+1} = {col}")
 
+            # Statsmodels OLS for detailed statistical inference
+            X_sm = sm.add_constant(X)
+            ols_model = sm.OLS(y, X_sm).fit()
+
+            st.markdown("### statsmodels 詳細結果")
+            coef_table = pd.DataFrame({
+                "変数": ["切片"] + x_cols,
+                "係数": ols_model.params.values,
+                "標準誤差": ols_model.bse.values,
+                "t値": ols_model.tvalues.values,
+                "p値": ols_model.pvalues.values,
+                "95%CI下限": ols_model.conf_int()[0].values,
+                "95%CI上限": ols_model.conf_int()[1].values,
+            })
+            coef_table["有意"] = coef_table["p値"].apply(
+                lambda p: "***" if p < 0.001 else ("**" if p < 0.01 else ("*" if p < 0.05 else ""))
+            )
+            st.dataframe(coef_table.set_index("変数").style.format({
+                "係数": "{:.4f}", "標準誤差": "{:.4f}", "t値": "{:.4f}",
+                "p値": "{:.4f}", "95%CI下限": "{:.4f}", "95%CI上限": "{:.4f}",
+            }), use_container_width=True)
+
+            sm_cols = st.columns(4)
+            with sm_cols[0]:
+                with st.container(border=True):
+                    st.metric("F統計量", f"{ols_model.fvalue:.4f}")
+            with sm_cols[1]:
+                with st.container(border=True):
+                    st.metric("F検定 p値", f"{ols_model.f_pvalue:.4f}")
+            with sm_cols[2]:
+                with st.container(border=True):
+                    st.metric("AIC", f"{ols_model.aic:.2f}")
+            with sm_cols[3]:
+                with st.container(border=True):
+                    st.metric("BIC", f"{ols_model.bic:.2f}")
+
+            with st.expander("📖 statsmodels結果の解釈"):
+                st.markdown(
+                    """
+**標準誤差（SE）**: 係数推定値のばらつき。小さいほど推定が安定している。
+
+**t値**: 係数がゼロと有意に異なるかを検定する統計量。$t = \\hat{\\beta} / SE(\\hat{\\beta})$
+
+**p値の有意水準記号**:
+| 記号 | 意味 |
+|------|------|
+| `***` | p < 0.001（非常に強い証拠） |
+| `**` | p < 0.01（強い証拠） |
+| `*` | p < 0.05（有意） |
+| （なし）| p ≥ 0.05（有意でない） |
+
+**95%信頼区間（CI）**: 係数の真の値が95%の確率で含まれる範囲。区間が0を含む場合は有意でない。
+
+**F統計量**: モデル全体の有意性を検定（すべての係数が同時にゼロかどうか）。
+
+**AIC / BIC**: モデル選択基準。値が小さいほど良いモデル（変数選択の比較に使用）。
+                    """
+                )
+
             # Model performance metrics
             st.markdown("### モデル評価指標")
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("R²", f"{r2:.4f}")
-            col2.metric("調整済みR²", f"{adj_r2:.4f}")
-            col3.metric("RMSE", f"{rmse:.4f}")
-            col4.metric("MAE", f"{mae:.4f}")
+            with col1:
+                with st.container(border=True):
+                    st.metric("R²", f"{r2:.4f}")
+            with col2:
+                with st.container(border=True):
+                    st.metric("調整済みR²", f"{adj_r2:.4f}")
+            with col3:
+                with st.container(border=True):
+                    st.metric("RMSE", f"{rmse:.4f}")
+            with col4:
+                with st.container(border=True):
+                    st.metric("MAE", f"{mae:.4f}")
 
             st.markdown(f"**交差検証R² (CV=5):** {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
+
+            with st.expander("📖 モデル評価指標の解釈"):
+                st.markdown(
+                    f"""
+**R²（決定係数）** と **調整済みR²**: モデルの説明力を示します（範囲: 0〜1）。説明変数が増えるほどR²は上昇しますが、調整済みR²は変数追加による上昇にペナルティをかけるため、変数選択の判断に適しています。
+
+| R² | 評価 |
+|----|------|
+| 0.9 以上 | 非常に良い当てはまり |
+| 0.7 〜 0.9 | 良い当てはまり |
+| 0.5 〜 0.7 | 中程度の当てはまり |
+| 0.5 未満 | 当てはまりが弱い |
+
+$$R^2_{{adj}} = 1 - (1 - R^2) \\cdot \\frac{{n-1}}{{n-k-1}}$$
+
+（$n$: サンプル数、$k$: 説明変数数）
+
+**RMSE** と **MAE**: いずれも目的変数と同じ単位で解釈できます。RMSE は大きな誤差を重視し、MAE は外れ値の影響を受けにくいです。
+
+現在の値: R²={r2:.4f}, 調整済みR²={adj_r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}
+                    """
+                )
 
             # Coefficients table
             st.markdown("### 回帰係数")
@@ -98,6 +189,36 @@ def show_multiple_regression(df: pd.DataFrame):
                 "係数": [model.intercept_] + list(model.coef_),
             })
             st.dataframe(coef_df, use_container_width=True)
+
+            # VIF (Variance Inflation Factor) for multicollinearity check
+            st.markdown("### 多重共線性の確認（VIF）")
+            vif_data = pd.DataFrame({
+                "変数": x_cols,
+                "VIF": [
+                    variance_inflation_factor(X.values, i)
+                    for i in range(X.shape[1])
+                ],
+            })
+            vif_data["判定"] = vif_data["VIF"].apply(
+                lambda v: "✅ 問題なし" if v < 5 else ("⚠️ 注意" if v < 10 else "❌ 多重共線性あり")
+            )
+            st.dataframe(vif_data, use_container_width=True)
+            with st.expander("VIFの解釈"):
+                st.markdown(
+                    """
+| VIF値 | 判定 | 説明 |
+|-------|------|------|
+| 1〜5未満 | ✅ 問題なし | 多重共線性の影響は軽微 |
+| 5〜10未満 | ⚠️ 注意 | 多重共線性の可能性あり、検討が必要 |
+| 10以上 | ❌ 多重共線性あり | 深刻な多重共線性、変数の削除や変換を検討 |
+
+**VIF（分散膨張因子）の計算式:**
+
+$$VIF_j = \\frac{1}{1 - R_j^2}$$
+
+- $R_j^2$: 説明変数 $j$ を他の説明変数で回帰したときの決定係数
+                    """
+                )
 
             # Feature importance (absolute coefficients)
             st.markdown("### 特徴量の重要度（標準化係数の絶対値）")
@@ -181,6 +302,50 @@ def show_multiple_regression(df: pd.DataFrame):
                 yaxis_title="残差",
             )
             st.plotly_chart(fig_res, use_container_width=True)
+
+            # Q-Q plot and histogram for residuals
+            st.markdown("### 残差の正規性確認")
+            col_qq, col_hist = st.columns(2)
+
+            with col_qq:
+                fig_qq = go.Figure()
+                (osm, osr), (slope, intercept, r) = stats.probplot(residuals, dist="norm")
+                fig_qq.add_trace(
+                    go.Scatter(x=osm, y=osr, mode="markers", name="残差")
+                )
+                fig_qq.add_trace(
+                    go.Scatter(
+                        x=osm,
+                        y=slope * osm + intercept,
+                        mode="lines",
+                        name="理論分布",
+                        line=dict(color="red"),
+                    )
+                )
+                fig_qq.update_layout(
+                    title="Q-Qプロット",
+                    xaxis_title="理論分位数",
+                    yaxis_title="サンプル分位数",
+                )
+                st.plotly_chart(fig_qq, use_container_width=True)
+
+            with col_hist:
+                fig_hist = go.Figure()
+                fig_hist.add_trace(
+                    go.Histogram(
+                        x=residuals,
+                        nbinsx=30,
+                        name="残差",
+                        marker_color="steelblue",
+                        opacity=0.7,
+                    )
+                )
+                fig_hist.update_layout(
+                    title="残差のヒストグラム",
+                    xaxis_title="残差",
+                    yaxis_title="頻度",
+                )
+                st.plotly_chart(fig_hist, use_container_width=True)
 
         except Exception as e:
             st.error(f"エラーが発生しました: {str(e)}")

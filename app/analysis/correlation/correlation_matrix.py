@@ -69,6 +69,23 @@ def show_correlation_analysis(df: pd.DataFrame):
             fig.update_layout(title="相関係数ヒートマップ")
             st.plotly_chart(fig, use_container_width=True)
 
+            with st.expander("📖 相関係数の解釈"):
+                st.markdown(
+                    """
+| 相関係数の絶対値 | 強さの目安 |
+|----------------|-----------|
+| 0.9 〜 1.0 | 非常に強い相関 |
+| 0.7 〜 0.9 | 強い相関 |
+| 0.5 〜 0.7 | 中程度の相関 |
+| 0.3 〜 0.5 | 弱い相関 |
+| 0.0 〜 0.3 | ほぼ相関なし |
+
+- **正の相関（0〜+1）**: 一方が増えると他方も増える傾向
+- **負の相関（−1〜0）**: 一方が増えると他方は減る傾向
+- **相関係数の種類**: ピアソン（線形関係）、スピアマン/ケンドール（単調関係・外れ値に頑健）
+                    """
+                )
+
             # Find strong correlations
             st.markdown("### 強い相関関係")
             threshold = st.slider("相関係数の閾値", 0.0, 1.0, 0.7, 0.05)
