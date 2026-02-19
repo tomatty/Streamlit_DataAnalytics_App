@@ -93,13 +93,26 @@ cp .env.example .env
 
 3. Dockerコンテナを起動
 ```bash
-docker-compose up
+docker compose up -d
 ```
 
 4. ブラウザでアクセス
 ```
 http://localhost:8501
 ```
+
+## Dockerコマンド
+
+| 操作 | コマンド |
+|------|---------|
+| 起動（バックグラウンド） | `docker compose up -d` |
+| 起動（ログ表示） | `docker compose up` |
+| 停止 | `docker compose stop` |
+| 停止 + コンテナ削除 | `docker compose down` |
+| 再起動 | `docker compose restart` |
+| イメージ再ビルド + 起動 | `docker compose up -d --build` |
+| ログ確認 | `docker compose logs -f` |
+| コンテナ状態確認 | `docker compose ps` |
 
 ### ローカル環境で実行する場合
 
@@ -192,7 +205,8 @@ mypy app/
 
 ### Dockerコンテナが起動しない
 - ポート8501が他のプロセスで使用されていないか確認
-- `docker-compose down`で既存のコンテナを停止してから再起動
+- `docker compose down`で既存のコンテナを停止してから再起動
+- requirements.txtを変更した場合は`docker compose up -d --build`で再ビルドが必要
 
 ### ファイルアップロードができない
 - ファイルサイズが設定値（デフォルト200MB）を超えていないか確認
