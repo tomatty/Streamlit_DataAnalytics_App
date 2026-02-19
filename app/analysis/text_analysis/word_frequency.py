@@ -122,69 +122,85 @@ def show_word_frequency_analysis(df: pd.DataFrame):
 
             word_counts = Counter(words)
             top_words = word_counts.most_common(max_words)
-
-            st.success(f"単語頻度分析が完了しました！（総単語数: {len(words)}）")
-
-            # Frequency table
-            st.markdown("### 頻出単語ランキング")
             freq_df = pd.DataFrame(top_words, columns=["単語", "出現回数"])
             freq_df["順位"] = range(1, len(freq_df) + 1)
             freq_df = freq_df[["順位", "単語", "出現回数"]]
-            st.dataframe(freq_df, use_container_width=True)
 
-            # Horizontal bar chart with display-count control
-            st.markdown("### 単語頻度グラフ")
-            chart_n = st.slider(
-                "グラフ表示数",
-                min_value=5,
-                max_value=min(max_words, len(freq_df)),
-                value=min(20, len(freq_df)),
-                key="chart_n_slider",
-            )
-            chart_df = freq_df.head(chart_n).sort_values("出現回数", ascending=True)
-            fig = px.bar(
-                chart_df,
-                x="出現回数",
-                y="単語",
-                orientation="h",
-                title=f"Top {chart_n} 単語",
-            )
-            fig.update_layout(yaxis={"tickfont": {"size": 11}})
-            st.plotly_chart(fig, use_container_width=True)
-
-            # Word cloud
-            st.markdown("### ワードクラウド")
-            try:
-                font_path = _find_jp_font() if language == "日本語" else None
-                wc = WordCloud(
-                    width=800,
-                    height=400,
-                    background_color="white",
-                    font_path=font_path,
-                    max_words=max_words,
-                ).generate_from_frequencies(dict(word_counts))
-
-                if language == "日本語" and font_path:
-                    # matplotlib rendering to avoid PIL glyph issue with .ttc fonts
-                    fig_wc = _render_wordcloud_matplotlib(wc, font_path)
-                else:
-                    fig_wc, ax = plt.subplots(figsize=(10, 5))
-                    ax.imshow(wc, interpolation="bilinear")
-                    ax.axis("off")
-
-                st.pyplot(fig_wc)
-                plt.close(fig_wc)
-            except Exception as e:
-                st.warning(f"ワードクラウドの生成に失敗しました: {str(e)}")
-
-            # Download
-            csv = freq_df.to_csv(index=False).encode("utf-8-sig")
-            st.download_button(
-                label="単語頻度データをダウンロード",
-                data=csv,
-                file_name="word_frequency.csv",
-                mime="text/csv",
-            )
+            # Persist results so slider reruns don't lose them
+            st.session_state["wf_freq_df"] = freq_df
+            st.session_state["wf_word_counts"] = dict(word_counts)
+            st.session_state["wf_total_words"] = len(words)
+            st.session_state["wf_max_words"] = max_words
+            st.session_state["wf_language"] = language
 
         except Exception as e:
             st.error(f"エラーが発生しました: {str(e)}")
+
+    # Render results (survives slider reruns via session_state)
+    if "wf_freq_df" not in st.session_state:
+        return
+
+    freq_df = st.session_state["wf_freq_df"]
+    word_counts = st.session_state["wf_word_counts"]
+    total_words = st.session_state["wf_total_words"]
+    saved_max_words = st.session_state["wf_max_words"]
+    saved_language = st.session_state["wf_language"]
+
+    st.success(f"単語頻度分析が完了しました！（総単語数: {total_words}）")
+
+    # Frequency table
+    st.markdown("### 頻出単語ランキング")
+    st.dataframe(freq_df, use_container_width=True)
+
+    # Horizontal bar chart with display-count control
+    st.markdown("### 単語頻度グラフ")
+    chart_n = st.slider(
+        "グラフ表示数",
+        min_value=5,
+        max_value=min(saved_max_words, len(freq_df)),
+        value=min(20, len(freq_df)),
+        key="chart_n_slider",
+    )
+    chart_df = freq_df.head(chart_n).sort_values("出現回数", ascending=True)
+    fig = px.bar(
+        chart_df,
+        x="出現回数",
+        y="単語",
+        orientation="h",
+        title=f"Top {chart_n} 単語",
+    )
+    fig.update_layout(yaxis={"tickfont": {"size": 11}})
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Word cloud
+    st.markdown("### ワードクラウド")
+    try:
+        font_path = _find_jp_font() if saved_language == "日本語" else None
+        wc = WordCloud(
+            width=800,
+            height=400,
+            background_color="white",
+            font_path=font_path,
+            max_words=saved_max_words,
+        ).generate_from_frequencies(word_counts)
+
+        if saved_language == "日本語" and font_path:
+            fig_wc = _render_wordcloud_matplotlib(wc, font_path)
+        else:
+            fig_wc, ax = plt.subplots(figsize=(10, 5))
+            ax.imshow(wc, interpolation="bilinear")
+            ax.axis("off")
+
+        st.pyplot(fig_wc)
+        plt.close(fig_wc)
+    except Exception as e:
+        st.warning(f"ワードクラウドの生成に失敗しました: {str(e)}")
+
+    # Download
+    csv = freq_df.to_csv(index=False).encode("utf-8-sig")
+    st.download_button(
+        label="単語頻度データをダウンロード",
+        data=csv,
+        file_name="word_frequency.csv",
+        mime="text/csv",
+    )
