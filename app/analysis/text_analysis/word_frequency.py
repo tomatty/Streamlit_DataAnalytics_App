@@ -1,6 +1,7 @@
 """
 Word frequency analysis module with Japanese support.
 """
+import os
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -12,6 +13,19 @@ try:
     JANOME_AVAILABLE = True
 except ImportError:
     JANOME_AVAILABLE = False
+
+_JP_FONT_CANDIDATES = [
+    "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc",
+    "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
+    "/System/Library/Fonts/ヒラギノ明朝 ProN.ttc",
+    "/System/Library/Fonts/Hiragino Sans GB.ttc",
+]
+
+def _find_jp_font() -> str | None:
+    for path in _JP_FONT_CANDIDATES:
+        if os.path.exists(path):
+            return path
+    return None
 
 
 def show_word_frequency_analysis(df: pd.DataFrame):
@@ -74,38 +88,32 @@ def show_word_frequency_analysis(df: pd.DataFrame):
             freq_df = freq_df[["順位", "単語", "出現回数"]]
             st.dataframe(freq_df, use_container_width=True)
 
-            # Bar chart
+            # Horizontal bar chart
             st.markdown("### 単語頻度グラフ")
+            top20 = freq_df.head(20).sort_values("出現回数", ascending=True)
             fig = px.bar(
-                freq_df.head(20),
-                x="単語",
-                y="出現回数",
-                title=f"Top 20 単語"
+                top20,
+                x="出現回数",
+                y="単語",
+                orientation="h",
+                title="Top 20 単語",
             )
             st.plotly_chart(fig, use_container_width=True)
 
             # Word cloud
             st.markdown("### ワードクラウド")
             try:
-                if language == "日本語":
-                    # Use Japanese font
-                    wordcloud = WordCloud(
-                        width=800,
-                        height=400,
-                        background_color="white",
-                        font_path="/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc" if plt.get_backend() == "MacOSX" else None
-                    ).generate_from_frequencies(dict(word_counts))
-                else:
-                    wordcloud = WordCloud(
-                        width=800,
-                        height=400,
-                        background_color="white"
-                    ).generate_from_frequencies(dict(word_counts))
+                font_path = _find_jp_font() if language == "日本語" else None
+                wc_kwargs = dict(width=800, height=400, background_color="white")
+                if font_path:
+                    wc_kwargs["font_path"] = font_path
+                wordcloud = WordCloud(**wc_kwargs).generate_from_frequencies(dict(word_counts))
 
-                fig, ax = plt.subplots(figsize=(10, 5))
+                fig_wc, ax = plt.subplots(figsize=(10, 5))
                 ax.imshow(wordcloud, interpolation="bilinear")
                 ax.axis("off")
-                st.pyplot(fig)
+                st.pyplot(fig_wc)
+                plt.close(fig_wc)
             except Exception as e:
                 st.warning(f"ワードクラウドの生成に失敗しました: {str(e)}")
 
