@@ -2,6 +2,8 @@
 Decision Tree analysis module.
 Supports both classification and regression tasks.
 """
+import matplotlib
+import matplotlib.font_manager as _fm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -20,10 +22,26 @@ from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor, export_text, plot_tree
 
+# Search for an available Japanese font (installed via packages.txt or japanize-matplotlib)
+_JP_FONT_CANDIDATES = [
+    "Noto Sans CJK JP",
+    "Noto Sans JP",
+    "IPAexGothic",
+    "IPAGothic",
+    "TakaoGothic",
+    "VL Gothic",
+    "Hiragino Sans",
+    "Yu Gothic",
+]
 try:
-    import japanize_matplotlib  # noqa: F401  # sets up Japanese font automatically
-except ImportError:
+    _fm._load_fontmanager(try_read_cache=False)
+except Exception:
     pass
+_available = {f.name for f in _fm.fontManager.ttflist}
+for _candidate in _JP_FONT_CANDIDATES:
+    if _candidate in _available:
+        matplotlib.rcParams["font.family"] = _candidate
+        break
 
 _SS = "dt_results"  # session_state key
 
