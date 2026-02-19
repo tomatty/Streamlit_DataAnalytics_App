@@ -197,10 +197,9 @@ def show_conjoint_analysis(df: pd.DataFrame):
                     hovermode="closest",
                     showlegend=True,
                     height=500,
-                    xaxis=dict(showgrid=True, gridcolor='lightgray'),
+                    xaxis=dict(showgrid=True, gridcolor='lightgray', tickangle=-45),
                     yaxis=dict(showgrid=True, gridcolor='lightgray', zeroline=True, zerolinecolor='black', zerolinewidth=1)
                 )
-                fig.update_xaxis(tickangle=-45)
                 st.plotly_chart(fig, width="stretch")
 
                 with st.expander("📖 効用値グラフの読み方"):
