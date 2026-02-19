@@ -3,6 +3,7 @@ Conjoint Analysis module (simplified implementation).
 """
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
 from sklearn.linear_model import LinearRegression
 
@@ -36,12 +37,25 @@ def show_conjoint_analysis(df: pd.DataFrame):
   - 選択型: 複数プロファイルから1つ選択
 
 **3. データの準備**
-- **総合評価列**: 回答者の評価スコア（数値型）
-- **属性列**: 各プロファイルの属性値
-  - 数値型: 価格、サイズなど
-  - カテゴリカル型: ブランド、色など（ダミー変数化される）
+- **データ形式**:
+  - 行：プロファイル（製品の組み合わせパターン）
+  - 列：総合評価 + 各属性
+  - **プロファイル形式**が基本（各行が1つの製品案の評価）
+- **データ例（スマートフォン評価）**:
+  ```
+  | プロファイル | 総合評価 | ブランド | 価格   | 画面サイズ | バッテリー |
+  |------------|---------|---------|-------|-----------|----------|
+  | 1          | 7       | A社     | 5万円  | 6インチ    | 4000mAh  |
+  | 2          | 5       | B社     | 3万円  | 5インチ    | 3000mAh  |
+  | 3          | 8       | A社     | 7万円  | 6.5インチ  | 5000mAh  |
+  | 4          | 4       | C社     | 3万円  | 5インチ    | 3000mAh  |
+  ```
+- **列の種類**:
+  - 総合評価列：数値型（1-10点、1-7点など）
+  - 属性列（カテゴリカル）：ブランド、色、サイズなど
+  - 属性列（数値型）：価格、容量、重さなど
 - 欠損値の処理
-- 回答者ごとのデータ構造確認
+- **サンプル数の目安**: プロファイル数 ≥ (属性数 × 平均水準数) × 3
 
 **4. 分析の実行**
 - 線形回帰モデルで部分効用値を推定
@@ -146,75 +160,100 @@ def show_conjoint_analysis(df: pd.DataFrame):
             st.caption("各属性の水準ごとの効用値を折れ線グラフで表示します。効用値が高いほど、その水準が総合評価に正の影響を与えます。")
 
             if len(utilities_extended) > 0:
-                fig = go.Figure()
+                # Separate categorical and numeric attributes
+                categorical_attrs = []
+                numeric_attrs = []
 
-                # Create x-axis labels: "Attribute: Level"
-                utilities_extended = utilities_extended.copy()
-                utilities_extended["x_label"] = utilities_extended["属性"] + ": " + utilities_extended["水準"]
-
-                # Sort by attribute and level for consistent ordering
-                utilities_extended = utilities_extended.sort_values(["属性", "水準"])
-
-                # Get all unique x labels
-                all_x_labels = utilities_extended["x_label"].tolist()
-
-                # For each attribute, create a line that connects only its levels
                 for attr_name in utilities_extended["属性"].unique():
                     attr_data = utilities_extended[utilities_extended["属性"] == attr_name]
+                    # If more than one level, it's categorical
+                    if len(attr_data) > 1:
+                        categorical_attrs.append(attr_name)
+                    else:
+                        numeric_attrs.append(attr_name)
 
-                    # Create arrays with None for positions that don't belong to this attribute
-                    x_vals = []
-                    y_vals = []
-                    text_vals = []
+                # Create subplots for categorical attributes
+                if categorical_attrs:
+                    n_attrs = len(categorical_attrs)
+                    fig = make_subplots(
+                        rows=1, cols=n_attrs,
+                        subplot_titles=categorical_attrs,
+                        horizontal_spacing=0.08
+                    )
 
-                    for x_label in all_x_labels:
-                        if x_label in attr_data["x_label"].values:
-                            row = attr_data[attr_data["x_label"] == x_label].iloc[0]
-                            x_vals.append(x_label)
-                            y_vals.append(row["効用値"])
-                            text_vals.append(f"{row['効用値']:.2f}")
-                        else:
-                            x_vals.append(x_label)
-                            y_vals.append(None)
-                            text_vals.append("")
+                    for i, attr_name in enumerate(categorical_attrs, start=1):
+                        attr_data = utilities_extended[utilities_extended["属性"] == attr_name].sort_values("水準")
 
-                    fig.add_trace(go.Scatter(
-                        x=x_vals,
-                        y=y_vals,
-                        mode="lines+markers+text",
-                        name=attr_name,
-                        text=text_vals,
-                        textposition="top center",
-                        line=dict(width=2),
-                        marker=dict(size=8),
-                        connectgaps=False  # Don't connect across None values
+                        fig.add_trace(
+                            go.Scatter(
+                                x=attr_data["水準"],
+                                y=attr_data["効用値"],
+                                mode="lines+markers+text",
+                                text=[f"{val:.2f}" for val in attr_data["効用値"]],
+                                textposition="top center",
+                                line=dict(width=2, color='steelblue'),
+                                marker=dict(size=10, color='steelblue'),
+                                showlegend=False,
+                                name=attr_name
+                            ),
+                            row=1, col=i
+                        )
+
+                        # Add zero line
+                        fig.add_hline(y=0, line_dash="dash", line_color="red", opacity=0.5, row=1, col=i)
+
+                        # Update axes for this subplot
+                        fig.update_xaxes(title_text="水準", tickangle=-45, row=1, col=i)
+                        if i == 1:
+                            fig.update_yaxes(title_text="効用値", row=1, col=i)
+
+                    fig.update_layout(
+                        title_text="部分効用値グラフ（カテゴリカル属性）",
+                        height=400,
+                        showlegend=False
+                    )
+                    st.plotly_chart(fig, width="stretch")
+
+                # Display numeric attributes as bar chart
+                if numeric_attrs:
+                    st.markdown("#### 数値型属性の係数")
+                    numeric_data = utilities_extended[utilities_extended["属性"].isin(numeric_attrs)]
+
+                    fig_numeric = go.Figure(go.Bar(
+                        x=numeric_data["属性"],
+                        y=numeric_data["効用値"],
+                        text=[f"{val:.3f}" for val in numeric_data["効用値"]],
+                        textposition='outside',
+                        marker=dict(color=numeric_data["効用値"], colorscale='RdBu', showscale=False)
                     ))
-
-                fig.update_layout(
-                    title="部分効用値グラフ",
-                    xaxis_title="属性と水準",
-                    yaxis_title="効用値",
-                    hovermode="closest",
-                    showlegend=True,
-                    height=500,
-                    xaxis=dict(showgrid=True, gridcolor='lightgray', tickangle=-45),
-                    yaxis=dict(showgrid=True, gridcolor='lightgray', zeroline=True, zerolinecolor='black', zerolinewidth=1)
-                )
-                st.plotly_chart(fig, width="stretch")
+                    fig_numeric.update_layout(
+                        title="数値型属性の効用係数",
+                        xaxis_title="属性",
+                        yaxis_title="係数（1単位あたりの効用変化）",
+                        height=400
+                    )
+                    fig_numeric.add_hline(y=0, line_dash="dash", line_color="gray")
+                    st.plotly_chart(fig_numeric, width="stretch")
 
                 with st.expander("📖 効用値グラフの読み方"):
                     st.markdown(
                         """
-**グラフの見方：**
-- **X軸**: 各属性とその水準（例: CPU: Celeron, HDD容量: 5GB）
-- **Y軸**: 部分効用値（正の値は評価を上げる、負の値は評価を下げる）
-- **折れ線**: 各属性内での水準間の効用値の変化
-- **ゼロ線**: 効用値0のライン（これより上は正の影響、下は負の影響）
+**カテゴリカル属性のグラフ：**
+- 各サブプロットが1つの属性を表します
+- X軸：その属性の水準（例: ブランドA, B, C）
+- Y軸：部分効用値
+- 折れ線：水準間の効用値の変化
+- 赤い破線：効用値0のライン（これより上は正の影響、下は負の影響）
+
+**数値型属性のグラフ：**
+- 各バーが1つの属性を表します
+- Y軸：効用係数（その属性が1単位増えたときの効用変化）
+- 例：価格の係数が-0.01なら、価格が100円上がると効用が1減少
 
 **解釈のポイント：**
 - 効用値が高い水準ほど、顧客の評価を高める
 - 同じ属性内で効用値の差が大きいほど、その属性の選択が重要
-- 数値型属性（価格など）は係数として表示され、1単位あたりの効用変化を示す
+- 数値型属性は線形関係を仮定（1単位増えるごとに一定の効用変化）
                         """
                     )
 
