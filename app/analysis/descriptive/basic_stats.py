@@ -14,7 +14,7 @@ def show_basic_statistics(df: pd.DataFrame):
     Args:
         df: DataFrame to analyze
     """
-    st.subheader("📊 基本統計量")
+    st.subheader("📊 数量データ")
 
     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
 
@@ -29,28 +29,38 @@ def show_basic_statistics(df: pd.DataFrame):
     # Distribution plots
     st.markdown("### 分布")
 
-    selected_col = st.selectbox("列を選択", numeric_cols)
+    selected_cols = st.multiselect(
+        "列を選択（複数選択可）",
+        numeric_cols,
+        default=numeric_cols[:1] if numeric_cols else [],
+        key="num_dist_select",
+    )
 
-    if selected_col:
-        col1, col2 = st.columns(2)
+    if not selected_cols:
+        st.info("列を選択してください。")
+        return
 
-        with col1:
+    for col in selected_cols:
+        st.markdown(f"#### {col}")
+        chart_col1, chart_col2 = st.columns(2)
+
+        with chart_col1:
             # Histogram
             fig_hist = px.histogram(
                 df,
-                x=selected_col,
-                title=f"{selected_col} のヒストグラム",
-                labels={selected_col: selected_col},
+                x=col,
+                title=f"{col} のヒストグラム",
+                labels={col: col},
             )
             st.plotly_chart(fig_hist, use_container_width=True)
 
-        with col2:
+        with chart_col2:
             # Box plot
             fig_box = px.box(
                 df,
-                y=selected_col,
-                title=f"{selected_col} の箱ひげ図",
-                labels={selected_col: selected_col},
+                y=col,
+                title=f"{col} の箱ひげ図",
+                labels={col: col},
             )
             st.plotly_chart(fig_box, use_container_width=True)
 
@@ -62,7 +72,7 @@ def show_categorical_statistics(df: pd.DataFrame):
     Args:
         df: DataFrame to analyze
     """
-    st.subheader("📋 カテゴリカル変数の統計")
+    st.subheader("📋 カテゴリーデータ")
 
     categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
 
@@ -70,38 +80,47 @@ def show_categorical_statistics(df: pd.DataFrame):
         st.warning("カテゴリカル型の列が見つかりません。")
         return
 
-    selected_col = st.selectbox("列を選択", categorical_cols, key="cat_select")
+    selected_cols = st.multiselect(
+        "列を選択（複数選択可）",
+        categorical_cols,
+        default=categorical_cols[:1] if categorical_cols else [],
+        key="cat_dist_select",
+    )
 
-    if selected_col:
-        # Value counts
-        value_counts = df[selected_col].value_counts()
+    if not selected_cols:
+        st.info("列を選択してください。")
+        return
+
+    for col in selected_cols:
+        st.markdown(f"#### {col}")
+        value_counts = df[col].value_counts()
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("### 度数分布表")
+            st.markdown("**度数分布表**")
             freq_df = pd.DataFrame({
                 "カテゴリー": value_counts.index,
                 "度数": value_counts.values,
-                "割合(%)": (value_counts / len(df) * 100).values,
+                "割合(%)": (value_counts / len(df) * 100).round(1).values,
             })
             st.dataframe(freq_df, use_container_width=True)
 
         with col2:
-            st.markdown("### 円グラフ")
             fig_pie = px.pie(
                 values=value_counts.values,
                 names=value_counts.index,
-                title=f"{selected_col} の分布",
+                title=f"{col} の分布",
             )
             st.plotly_chart(fig_pie, use_container_width=True)
 
         # Bar chart
-        st.markdown("### 棒グラフ")
         fig_bar = px.bar(
             x=value_counts.index,
             y=value_counts.values,
-            labels={"x": selected_col, "y": "度数"},
-            title=f"{selected_col} の度数分布",
+            labels={"x": col, "y": "度数"},
+            title=f"{col} の度数分布",
         )
         st.plotly_chart(fig_bar, use_container_width=True)
+
+        st.markdown("---")
