@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
 
 
 def show_conjoint_analysis(df: pd.DataFrame):
@@ -114,11 +115,101 @@ def show_conjoint_analysis(df: pd.DataFrame):
             X = pd.get_dummies(data_subset[attribute_cols], drop_first=True)
             y = data_subset[preference_col]
 
-            # Fit linear regression model
+            # Fit linear regression model (sklearn)
             model = LinearRegression()
             model.fit(X, y)
 
+            # Fit OLS model (statsmodels) for detailed statistics
+            X_with_const = sm.add_constant(X)
+            ols_model = sm.OLS(y, X_with_const)
+            ols_results = ols_model.fit()
+
             st.success("コンジョイント分析が完了しました！")
+
+            # Regression analysis results
+            st.markdown("### 回帰分析の詳細結果")
+            st.caption("各係数の統計的有意性を確認できます。p値が0.05未満の場合、その属性は統計的に有意です。")
+
+            # Create summary dataframe
+            summary_df = pd.DataFrame({
+                "変数": X_with_const.columns,
+                "係数": ols_results.params,
+                "標準誤差": ols_results.bse,
+                "t値": ols_results.tvalues,
+                "p値": ols_results.pvalues,
+                "95%CI下限": ols_results.conf_int()[0],
+                "95%CI上限": ols_results.conf_int()[1],
+            })
+
+            # Add significance stars
+            def add_significance(p):
+                if p < 0.001:
+                    return "***"
+                elif p < 0.01:
+                    return "**"
+                elif p < 0.05:
+                    return "*"
+                else:
+                    return ""
+
+            summary_df["有意"] = summary_df["p値"].apply(add_significance)
+
+            # Display the table
+            st.dataframe(
+                summary_df.style.format({
+                    "係数": "{:.4f}",
+                    "標準誤差": "{:.4f}",
+                    "t値": "{:.4f}",
+                    "p値": "{:.4f}",
+                    "95%CI下限": "{:.4f}",
+                    "95%CI上限": "{:.4f}",
+                }).background_gradient(subset=["p値"], cmap="RdYlGn_r", vmin=0, vmax=0.1),
+                width="stretch"
+            )
+
+            # Model fit statistics
+            st.markdown("#### モデル適合度")
+            fit_cols = st.columns(4)
+            with fit_cols[0]:
+                with st.container(border=True):
+                    st.metric("F統計量", f"{ols_results.fvalue:.2f}")
+            with fit_cols[1]:
+                with st.container(border=True):
+                    st.metric("F検定p値", f"{ols_results.f_pvalue:.4f}")
+            with fit_cols[2]:
+                with st.container(border=True):
+                    st.metric("AIC", f"{ols_results.aic:.2f}")
+            with fit_cols[3]:
+                with st.container(border=True):
+                    st.metric("BIC", f"{ols_results.bic:.2f}")
+
+            with st.expander("📖 統計指標の解釈"):
+                st.markdown(
+                    """
+**回帰係数（係数）**: 各属性が総合評価に与える影響の大きさ
+- 正の値: その属性は評価を上げる
+- 負の値: その属性は評価を下げる
+
+**p値**: 係数が統計的に有意かどうかを示す指標
+- p < 0.05: 統計的に有意（その属性は評価に影響している）
+- p ≥ 0.05: 統計的に有意でない（偶然の可能性）
+
+**有意水準の目安**:
+- ***: p < 0.001（非常に強い有意性）
+- **: p < 0.01（強い有意性）
+- *: p < 0.05（有意）
+- （なし）: p ≥ 0.05（有意でない）
+
+**95%信頼区間（CI）**: 係数の真の値が存在する範囲（95%の確率）
+- 区間が0を含まない場合、その係数は有意
+
+**F統計量・F検定p値**: モデル全体の有意性
+- F検定p値 < 0.05 なら、モデル全体が有意
+
+**AIC・BIC**: モデルの良さを示す指標（小さいほど良い）
+- モデル選択時に使用
+                    """
+                )
 
             # Part-worth utilities
             st.markdown("### 部分効用値（Part-worth utilities）")
