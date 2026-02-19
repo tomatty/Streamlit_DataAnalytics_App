@@ -292,13 +292,23 @@ def show_decision_tree(df: pd.DataFrame):
     tab_plot, tab_text = st.tabs(["樹形図", "テキスト表示"])
 
     with tab_plot:
-        display_depth = st.slider(
-            "表示する深さ",
-            min_value=1,
-            max_value=min(max_depth, 6),
-            value=min(3, max_depth),
-            key="dt_display_depth",
-        )
+        col_depth, col_prop = st.columns([2, 1])
+        with col_depth:
+            display_depth = st.slider(
+                "表示する深さ",
+                min_value=1,
+                max_value=min(max_depth, 6),
+                value=min(3, max_depth),
+                key="dt_display_depth",
+            )
+        with col_prop:
+            show_proportion = st.checkbox(
+                "割合で表示",
+                value=False,
+                key="dt_show_proportion",
+                help="サンプル数の代わりに全体に対する割合（確率）を表示します",
+            )
+
         class_names = le.classes_.astype(str).tolist() if not is_regression else None
         actual_depth = model.get_depth()
         # Cap visible leaves to avoid over-expanding the figure
@@ -316,7 +326,8 @@ def show_decision_tree(df: pd.DataFrame):
             rounded=True,
             fontsize=fontsize,
             impurity=True,
-            proportion=False,
+            proportion=show_proportion,
+            precision=3,
             ax=ax,
         )
         ax.set_title(
@@ -325,6 +336,34 @@ def show_decision_tree(df: pd.DataFrame):
         )
         st.pyplot(fig_tree, width="stretch")
         plt.close(fig_tree)
+
+        with st.expander("📖 樹形図の見方"):
+            if show_proportion:
+                st.markdown(
+                    """
+**各ノードの表示内容：**
+- **分割条件**: 特徴量 <= 閾値（内部ノードのみ）
+- **gini/entropy**: 不純度（0に近いほど純粋）
+- **samples**: 全体に対するサンプルの割合（0.0〜1.0）
+- **value**: 各クラスのサンプル割合（分類）または予測値（回帰）
+- **class**: 最も多いクラス（分類のみ）
+
+「割合で表示」オン時は、各ノードのサンプル数と各クラスの数が割合（確率）で表示されます。
+                    """
+                )
+            else:
+                st.markdown(
+                    """
+**各ノードの表示内容：**
+- **分割条件**: 特徴量 <= 閾値（内部ノードのみ）
+- **gini/entropy**: 不純度（0に近いほど純粋）
+- **samples**: サンプル数
+- **value**: 各クラスのサンプル数（分類）または予測値（回帰）
+- **class**: 最も多いクラス（分類のみ）
+
+「割合で表示」をオンにすると、確率表示に切り替わります。
+                    """
+                )
 
     with tab_text:
         tree_text = export_text(model, feature_names=feature_cols, max_depth=min(max_depth, 4))
