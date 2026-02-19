@@ -2,7 +2,6 @@
 Decision Tree analysis module.
 Supports both classification and regression tasks.
 """
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -21,7 +20,10 @@ from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor, export_text, plot_tree
 
-matplotlib.rcParams["font.family"] = "Noto Sans CJK JP"
+try:
+    import japanize_matplotlib  # noqa: F401  # sets up Japanese font automatically
+except ImportError:
+    pass
 
 _SS = "dt_results"  # session_state key
 
@@ -219,7 +221,7 @@ def show_decision_tree(df: pd.DataFrame):
         report_df = pd.DataFrame(report_dict).T
         st.dataframe(
             report_df.style.format("{:.3f}", subset=["precision", "recall", "f1-score"]),
-            use_container_width=True,
+            width="stretch",
         )
 
         st.markdown("#### 混同行列")
@@ -233,7 +235,7 @@ def show_decision_tree(df: pd.DataFrame):
             color_continuous_scale="Blues",
         )
         fig_cm.update_layout(title="混同行列")
-        st.plotly_chart(fig_cm, use_container_width=True)
+        st.plotly_chart(fig_cm, width="stretch")
 
         with st.expander("📖 分類指標の解釈"):
             st.markdown(
@@ -265,7 +267,7 @@ def show_decision_tree(df: pd.DataFrame):
         color_continuous_scale="Blues",
     )
     fig_imp.update_layout(showlegend=False, yaxis={"categoryorder": "total ascending"})
-    st.plotly_chart(fig_imp, use_container_width=True)
+    st.plotly_chart(fig_imp, width="stretch")
 
     # --- Tree visualization ---
     st.markdown("### 木の構造")
@@ -303,7 +305,7 @@ def show_decision_tree(df: pd.DataFrame):
             f"決定木（表示深さ: {display_depth} / 実際の深さ: {actual_depth}）",
             fontsize=12,
         )
-        st.pyplot(fig_tree, use_container_width=True)
+        st.pyplot(fig_tree, width="stretch")
         plt.close(fig_tree)
 
     with tab_text:
@@ -326,4 +328,4 @@ def show_decision_tree(df: pd.DataFrame):
             mode="lines", line=dict(color="red", dash="dash"), name="完全予測",
         ))
         fig_pred.update_layout(title="予測値 vs 実測値", xaxis_title="実測値", yaxis_title="予測値")
-        st.plotly_chart(fig_pred, use_container_width=True)
+        st.plotly_chart(fig_pred, width="stretch")
