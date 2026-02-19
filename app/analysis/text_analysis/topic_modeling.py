@@ -6,16 +6,11 @@ import streamlit as st
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 import plotly.express as px
-from app.auth.session_manager import SessionManager
 
 
 def show_topic_modeling(df: pd.DataFrame):
     """Display topic modeling interface."""
     st.subheader("📚 トピックモデリング（LDA）")
-
-    # Get default values from settings
-    default_n_topics = SessionManager.get_setting("n_topics", 5)
-    default_max_features = SessionManager.get_setting("max_features", 100)
 
     text_cols = df.select_dtypes(include=["object"]).columns.tolist()
 
@@ -27,9 +22,9 @@ def show_topic_modeling(df: pd.DataFrame):
     with col1:
         text_col = st.selectbox("テキスト列を選択", text_cols)
     with col2:
-        n_topics = st.slider("トピック数", min_value=2, max_value=20, value=int(default_n_topics))
+        n_topics = st.slider("トピック数", min_value=2, max_value=20, value=5)
     with col3:
-        max_features = st.number_input("最大特徴量数", min_value=10, max_value=1000, value=int(default_max_features), step=10)
+        max_features = st.number_input("最大特徴量数", min_value=10, max_value=1000, value=100, step=10)
 
     if st.button("トピックモデリングを実行", type="primary"):
         try:

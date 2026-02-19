@@ -7,7 +7,6 @@ import plotly.express as px
 from collections import Counter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-from app.auth.session_manager import SessionManager
 try:
     from janome.tokenizer import Tokenizer
     JANOME_AVAILABLE = True
@@ -18,9 +17,6 @@ except ImportError:
 def show_word_frequency_analysis(df: pd.DataFrame):
     """Display word frequency analysis interface."""
     st.subheader("📝 単語頻度分析")
-
-    # Get default max_features from settings
-    default_max_features = SessionManager.get_setting("max_features", 100)
 
     text_cols = df.select_dtypes(include=["object"]).columns.tolist()
 
@@ -38,7 +34,7 @@ def show_word_frequency_analysis(df: pd.DataFrame):
         st.error("Janomeがインストールされていません。`pip install janome`を実行してください。")
         return
 
-    max_words = st.slider("表示する単語数", min_value=10, max_value=min(int(default_max_features), 100), value=min(30, int(default_max_features)))
+    max_words = st.slider("表示する単語数", min_value=10, max_value=100, value=30)
 
     if st.button("単語頻度分析を実行", type="primary"):
         try:

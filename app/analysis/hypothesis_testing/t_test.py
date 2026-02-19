@@ -6,7 +6,6 @@ import numpy as np
 import streamlit as st
 import plotly.graph_objects as go
 from scipy import stats
-from app.auth.session_manager import SessionManager
 
 
 def show_t_test(df: pd.DataFrame):
@@ -36,9 +35,6 @@ def show_t_test(df: pd.DataFrame):
 
 def show_one_sample_t_test(df: pd.DataFrame, numeric_cols: list):
     """One-sample t-test."""
-    # Get default significance level from settings
-    default_alpha = SessionManager.get_setting("significance_level", 0.05)
-
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -46,7 +42,7 @@ def show_one_sample_t_test(df: pd.DataFrame, numeric_cols: list):
     with col2:
         mu0 = st.number_input("母平均（μ0）", value=0.0)
     with col3:
-        alpha = st.number_input("有意水準（α）", value=float(default_alpha), min_value=0.01, max_value=0.20, step=0.01)
+        alpha = st.number_input("有意水準（α）", value=0.05, min_value=0.01, max_value=0.20, step=0.01)
 
     if st.button("t検定を実行", type="primary"):
         data = df[test_col].dropna()

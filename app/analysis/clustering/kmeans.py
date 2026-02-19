@@ -9,7 +9,6 @@ import plotly.graph_objects as go
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
-from app.auth.session_manager import SessionManager
 
 
 def show_kmeans_clustering(df: pd.DataFrame):
@@ -32,10 +31,12 @@ def show_kmeans_clustering(df: pd.DataFrame):
         st.info("少なくとも2つの列を選択してください。")
         return
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         n_clusters = st.slider("クラスタ数", min_value=2, max_value=10, value=3)
     with col2:
+        max_iter = st.slider("最大イテレーション数", min_value=100, max_value=1000, value=300, step=50)
+    with col3:
         standardize = st.checkbox("データを標準化", value=True)
 
     # Elbow method
@@ -56,9 +57,6 @@ def show_kmeans_clustering(df: pd.DataFrame):
                 X = scaler.fit_transform(data_subset)
             else:
                 X = data_subset.values
-
-            # Get max iterations from settings
-            max_iter = SessionManager.get_setting("max_clustering_iterations", 300)
 
             # Perform K-Means
             kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10, max_iter=max_iter)

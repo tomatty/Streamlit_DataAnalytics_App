@@ -12,7 +12,7 @@ from app.constants import MSG_LOGIN_SUCCESS, MSG_LOGIN_FAILED
 
 def show_login_page():
     """Display the login page."""
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([2, 1, 2])
 
     with col2:
         st.title("🔐 ログイン")
@@ -52,7 +52,6 @@ def show_main_app():
         menu_option = st.radio(
             "メニュー",
             [
-                "⚙️ パラメータ設定",
                 "📁 ファイルアップロード",
                 "📊 データ概要",
                 "🔧 データ前処理",
@@ -86,9 +85,7 @@ def show_main_app():
             Authenticator.logout()
             st.rerun()
 
-    if menu_option == "⚙️ パラメータ設定":
-        show_settings_page()
-    elif menu_option == "📁 ファイルアップロード":
+    if menu_option == "📁 ファイルアップロード":
         show_file_upload_page()
     elif menu_option == "📊 データ概要":
         show_data_overview_page()
@@ -137,12 +134,6 @@ def show_export_page():
     data = SessionManager.get_data()
     show_export(data)
 
-
-def show_settings_page():
-    """Display settings page."""
-    from app.page_modules.settings import show_settings
-
-    show_settings()
 
 
 def main():
