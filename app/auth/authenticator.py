@@ -30,7 +30,7 @@ class Authenticator:
         Returns:
             bool: True if credentials are valid, False otherwise
         """
-        return username == config.auth.username and password == config.auth.password
+        return config.auth.users.get(username) == password
 
     @staticmethod
     def login(username: str, password: str) -> bool:

@@ -31,7 +31,8 @@ def show_login_page():
                     st.rerun()
                 else:
                     st.error(MSG_LOGIN_FAILED)
-
+        st.write("ユーザー名: freeuser")
+        st.write("パスワード: freeuser01")
         st.markdown("---")
         st.caption(f"📊 {config.app.name}")
 

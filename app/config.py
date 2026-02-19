@@ -14,16 +14,29 @@ load_dotenv()
 class AuthConfig:
     """Authentication configuration."""
 
-    username: str
-    password: str
+    users: dict
 
     @classmethod
     def from_env(cls) -> "AuthConfig":
-        """Load authentication config from environment variables."""
-        return cls(
-            username=os.getenv("APP_USERNAME", "admin"),
-            password=os.getenv("APP_PASSWORD", "admin"),
-        )
+        """Load authentication config from environment variables.
+
+        Reads APP_USERS in the format "user1:pass1,user2:pass2".
+        Falls back to APP_USERNAME / APP_PASSWORD for backward compatibility.
+        """
+        users_str = os.getenv("APP_USERS", "")
+        if users_str:
+            users = {}
+            for entry in users_str.split(","):
+                entry = entry.strip()
+                if ":" in entry:
+                    name, password = entry.split(":", 1)
+                    users[name.strip()] = password.strip()
+        else:
+            # Backward compatibility: single user from legacy env vars
+            username = os.getenv("APP_USERNAME", "admin")
+            password = os.getenv("APP_PASSWORD", "admin")
+            users = {username: password}
+        return cls(users=users)
 
 
 @dataclass
