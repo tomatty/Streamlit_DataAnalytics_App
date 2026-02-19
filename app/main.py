@@ -2,6 +2,14 @@
 Main application entry point.
 Handles authentication and routing.
 """
+import os
+import sys
+
+# Ensure the project root is on sys.path so that `app.*` imports work when
+# Streamlit Cloud executes this file directly (it adds app/ to sys.path, not
+# the repo root).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import streamlit as st
 
 from app.auth.authenticator import Authenticator
