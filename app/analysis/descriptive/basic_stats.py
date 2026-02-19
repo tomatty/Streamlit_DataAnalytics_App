@@ -29,23 +29,17 @@ def show_basic_statistics(df: pd.DataFrame):
     # Distribution plots
     st.markdown("### 分布")
 
-    selected_cols = st.multiselect(
+    # --- Histogram ---
+    st.markdown("#### ヒストグラム")
+    hist_cols = st.multiselect(
         "列を選択（複数選択可）",
         numeric_cols,
         default=numeric_cols[:1] if numeric_cols else [],
-        key="num_dist_select",
+        key="num_hist_select",
     )
 
-    if not selected_cols:
-        st.info("列を選択してください。")
-        return
-
-    for col in selected_cols:
-        st.markdown(f"#### {col}")
-        chart_col1, chart_col2 = st.columns(2)
-
-        with chart_col1:
-            # Histogram
+    if hist_cols:
+        for col in hist_cols:
             fig_hist = px.histogram(
                 df,
                 x=col,
@@ -53,16 +47,29 @@ def show_basic_statistics(df: pd.DataFrame):
                 labels={col: col},
             )
             st.plotly_chart(fig_hist, use_container_width=True)
+    else:
+        st.info("列を選択してください。")
 
-        with chart_col2:
-            # Box plot
-            fig_box = px.box(
-                df,
-                y=col,
-                title=f"{col} の箱ひげ図",
-                labels={col: col},
-            )
-            st.plotly_chart(fig_box, use_container_width=True)
+    # --- Box plot ---
+    st.markdown("#### 箱ひげ図")
+    box_cols = st.multiselect(
+        "列を選択（複数選択可）",
+        numeric_cols,
+        default=numeric_cols[:1] if numeric_cols else [],
+        key="num_box_select",
+    )
+
+    if box_cols:
+        df_melted = df[box_cols].melt(var_name="列", value_name="値")
+        fig_box = px.box(
+            df_melted,
+            x="列",
+            y="値",
+            title="箱ひげ図",
+        )
+        st.plotly_chart(fig_box, use_container_width=True)
+    else:
+        st.info("列を選択してください。")
 
 
 def show_categorical_statistics(df: pd.DataFrame):
