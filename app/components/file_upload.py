@@ -15,6 +15,7 @@ from app.constants import (
     SAMPLE_SURVEY,
     SAMPLE_PURCHASE_LOG,
     SAMPLE_TEXT_DATA,
+    SAMPLE_RETAIL_LOG_1YEAR,
 )
 
 
@@ -102,6 +103,7 @@ def show_sample_data_interface():
         "アンケートデータ": SAMPLE_SURVEY,
         "購買ログデータ": SAMPLE_PURCHASE_LOG,
         "テキストデータ": SAMPLE_TEXT_DATA,
+        "小売業購買ログ（1年分）": SAMPLE_RETAIL_LOG_1YEAR,
     }
 
     selected_sample = st.selectbox(

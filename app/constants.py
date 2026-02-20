@@ -53,6 +53,7 @@ SAMPLE_DATA_DIR = "data"
 SAMPLE_SURVEY = "sample_survey.csv"
 SAMPLE_PURCHASE_LOG = "sample_purchase_log.csv"
 SAMPLE_TEXT_DATA = "sample_text_data.csv"
+SAMPLE_RETAIL_LOG_1YEAR = "sample_retail_log_1year.csv"
 
 # UI Messages
 MSG_LOGIN_SUCCESS = "ログインに成功しました"
