@@ -122,12 +122,12 @@ def show_hypothesis_testing_page(data):
 
     analysis_type = st.radio(
         "分析タイプ",
-        ["t_test", "chi_square", "anova", "independence", "sample_size"],
+        ["t_test", "chi_square", "independence", "anova", "sample_size"],
         format_func=lambda x: {
             "t_test": "t検定",
             "chi_square": "カイ二乗検定",
-            "anova": "ANOVA",
             "independence": "独立性の検定",
+            "anova": "ANOVA",
             "sample_size": "サンプルサイズ計算"
         }[x],
         horizontal=True
@@ -137,10 +137,10 @@ def show_hypothesis_testing_page(data):
         show_t_test(data)
     elif analysis_type == "chi_square":
         show_chi_square_test(data)
-    elif analysis_type == "anova":
-        show_anova(data)
     elif analysis_type == "independence":
         show_independence_test(data)
+    elif analysis_type == "anova":
+        show_anova(data)
     else:
         show_sample_size_calculation()
 
