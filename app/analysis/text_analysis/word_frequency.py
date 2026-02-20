@@ -1,7 +1,6 @@
 """
 Word frequency analysis module with Japanese support.
 """
-import os
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -17,17 +16,36 @@ except ImportError:
     JANOME_AVAILABLE = False
 
 _JP_FONT_CANDIDATES = [
-    "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc",
-    "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
-    "/System/Library/Fonts/ヒラギノ明朝 ProN.ttc",
-    "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "Noto Sans CJK JP",
+    "Noto Sans JP",
+    "IPAexGothic",
+    "IPAGothic",
+    "TakaoGothic",
+    "VL Gothic",
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
 ]
 
 
 def _find_jp_font() -> str | None:
-    for path in _JP_FONT_CANDIDATES:
-        if os.path.exists(path):
-            return path
+    """
+    Find an available Japanese font on the system.
+
+    Returns the path to the font file if found, otherwise None.
+    Works across macOS, Linux (including Docker), and Windows.
+    """
+    try:
+        fm._load_fontmanager(try_read_cache=False)
+    except Exception:
+        pass
+
+    available_fonts = {f.name: f.fname for f in fm.fontManager.ttflist}
+
+    for candidate in _JP_FONT_CANDIDATES:
+        if candidate in available_fonts:
+            return available_fonts[candidate]
+
     return None
 
 
