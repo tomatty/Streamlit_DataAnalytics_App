@@ -111,7 +111,7 @@ class DataPreprocessor:
             for column in columns:
                 df_copy[column] = le.fit_transform(df_copy[column])
         elif method == "onehot":
-            df_copy = pd.get_dummies(df_copy, columns=columns, prefix=columns)
+            df_copy = pd.get_dummies(df_copy, columns=columns, prefix=columns, dtype=int)
 
         return df_copy
 
