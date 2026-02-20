@@ -49,6 +49,25 @@ def _find_jp_font() -> str | None:
     return None
 
 
+def _parse_rgb_color(color: str) -> tuple[float, float, float]:
+    """
+    Convert WordCloud's 'rgb(r, g, b)' string to matplotlib-compatible tuple.
+
+    Args:
+        color: Color string in format 'rgb(r, g, b)' where r, g, b are 0-255
+
+    Returns:
+        Tuple of (r, g, b) normalized to 0-1 range
+    """
+    import re
+    match = re.match(r'rgb\((\d+),\s*(\d+),\s*(\d+)\)', color)
+    if match:
+        r, g, b = map(int, match.groups())
+        return (r / 255.0, g / 255.0, b / 255.0)
+    # Fallback to black if parsing fails
+    return (0.0, 0.0, 0.0)
+
+
 def _render_wordcloud_matplotlib(wc: WordCloud, font_path: str | None) -> plt.Figure:
     """
     Re-render WordCloud layout using matplotlib's FreeType renderer.
@@ -76,11 +95,13 @@ def _render_wordcloud_matplotlib(wc: WordCloud, font_path: str | None) -> plt.Fi
 
     for (word, _), font_size, (x, y), orientation, color in wc.layout_:
         rot = 90 if orientation else 0
+        # Convert PIL/WordCloud color format to matplotlib format
+        mpl_color = _parse_rgb_color(color) if isinstance(color, str) and color.startswith('rgb(') else color
         ax.text(
             x, y, word,
             fontsize=font_size * 0.75,
             fontproperties=font_props,
-            color=color,
+            color=mpl_color,
             rotation=rot,
             ha="left",
             va="top",
