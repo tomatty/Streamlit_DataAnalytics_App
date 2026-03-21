@@ -281,14 +281,32 @@ def show_independence_test():
             help="期待される効果の大きさです。Cohen's w: 小=0.1, 中=0.3, 大=0.5"
         )
 
-        df = st.number_input(
-            "自由度（df）",
-            min_value=1,
-            max_value=20,
-            value=1,
+    st.markdown("### クロス集計表の設定")
+    col3, col4 = st.columns(2)
+
+    with col3:
+        rows = st.number_input(
+            "行数",
+            min_value=2,
+            max_value=10,
+            value=2,
             step=1,
-            help="(行数-1) × (列数-1) で計算されます。2×2分割表の場合は1です。"
+            help="クロス集計表の行数です。"
         )
+
+    with col4:
+        columns = st.number_input(
+            "列数",
+            min_value=2,
+            max_value=10,
+            value=2,
+            step=1,
+            help="クロス集計表の列数です。"
+        )
+
+    # Calculate degrees of freedom
+    df = (rows - 1) * (columns - 1)
+    st.info(f"自由度（df）= (行数 - 1) × (列数 - 1) = ({rows} - 1) × ({columns} - 1) = **{df}**")
 
     # Effect size interpretation
     st.markdown("### 効果量の目安（Cohen's w）")
@@ -317,7 +335,7 @@ def show_independence_test():
 
         # Display parameters
         st.markdown("### パラメータ")
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric("有意水準（α）", f"{alpha:.2f}")
@@ -325,7 +343,11 @@ def show_independence_test():
 
         with col2:
             st.metric("効果量（w）", f"{effect_size:.2f}")
+            st.metric("クロス集計表", f"{rows} × {columns}")
+
+        with col3:
             st.metric("自由度（df）", f"{df}")
+            st.metric("", "")
 
         # Effect size interpretation
         if effect_size < 0.2:
@@ -345,13 +367,14 @@ def show_independence_test():
         """)
 
         # Additional information
-        st.markdown("### 自由度の計算方法")
-        st.markdown("""
-        クロス集計表の自由度は以下のように計算されます：
-        - **自由度 = (行数 - 1) × (列数 - 1)**
+        st.markdown("### クロス集計表について")
+        st.markdown(f"""
+        現在の設定: **{rows}行 × {columns}列** のクロス集計表
+        - **自由度 = ({rows} - 1) × ({columns} - 1) = {df}**
 
-        例：
-        - 2×2分割表: (2-1) × (2-1) = 1
-        - 2×3分割表: (2-1) × (3-1) = 2
-        - 3×3分割表: (3-1) × (3-1) = 4
+        クロス集計表の例：
+        - 2×2分割表（例: 性別 × 購入有無）: 自由度 = 1
+        - 2×3分割表（例: 性別 × 3段階評価）: 自由度 = 2
+        - 3×3分割表（例: 年代 × 3段階評価）: 自由度 = 4
+        - 3×4分割表（例: 年代 × 4段階評価）: 自由度 = 6
         """)
