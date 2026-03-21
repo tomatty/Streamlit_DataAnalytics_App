@@ -61,6 +61,7 @@ def show_main_app():
         menu_option = st.radio(
             "メニュー",
             [
+                "🔢 サンプルサイズ計算",
                 "📁 ファイルアップロード",
                 "📊 データ概要",
                 "🔧 データ前処理",
@@ -94,7 +95,9 @@ def show_main_app():
             Authenticator.logout()
             st.rerun()
 
-    if menu_option == "📁 ファイルアップロード":
+    if menu_option == "🔢 サンプルサイズ計算":
+        show_sample_size_calculator_page()
+    elif menu_option == "📁 ファイルアップロード":
         show_file_upload_page()
     elif menu_option == "📊 データ概要":
         show_data_overview_page()
@@ -104,6 +107,13 @@ def show_main_app():
         show_analysis_page(analysis_category)
     elif menu_option == "💾 エクスポート":
         show_export_page()
+
+
+def show_sample_size_calculator_page():
+    """Display sample size calculator page."""
+    from app.page_modules.sample_size_calculator import show_sample_size_calculator
+
+    show_sample_size_calculator()
 
 
 def show_file_upload_page():
